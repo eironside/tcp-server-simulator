@@ -103,8 +103,14 @@ These answers were provided by the project owner and inform all requirements bel
 | RQ9 | Log rotation | **Configurable** with sensible default (10 MB) | Yes |
 | RQ10 | Server broadcast with zero subscribers | **Pause transmission** until at least one client is connected | Yes |
 | RQ11 | Connect/send timeout defaults | **10 seconds** each (configurable) | Yes |
-| RQ12 | UDP recipient cache defaults | TTL **300 seconds**, cap **256 recipients** (configurable) | Yes |
+| RQ12 | UDP recipient cache defaults | TTL **300 seconds**, cap **256 recipients**, cleanup interval **30 seconds**, LRU eviction (configurable) | Yes |
 | RQ13 | Config schema migration policy | **Hybrid**: migrate known older versions; invalidate unknown/incompatible versions and load defaults with warning | Yes |
+| RQ14 | Large file indexing/validation strategy | Background progressive scan; transmission can start before scan completes; counts remain provisional until finalized | Yes |
+| RQ15 | Backpressure queue model | Per-client outbound queue with high/low watermarks and hard cap | Yes |
+| RQ16 | CSV parsing semantics | RFC 4180-style quoted-field handling including embedded delimiters/newlines | Yes |
+| RQ17 | Timestamp clock/timezone policy | Normalize parsed timestamps to UTC; use monotonic clock for scheduling delays | Yes |
+| RQ18 | Standalone runtime preflight | Validate Python version and tkinter/Tk availability at startup with actionable errors | Yes |
+| RQ19 | GUI log monitoring mode | **No live monitoring**; load and refresh logs on demand | Yes |
 
 ---
 
@@ -128,10 +134,13 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-06 | The user shall be able to configure the field delimiter character in the GUI. | MVP |
 | FR-07 | The application shall support a configurable header row toggle. When enabled, the first line is treated as field names (used for field selection dropdowns). | MVP |
 | FR-08 | The user shall be able to toggle whether the header row is sent to clients. When enabled in server mode, the header shall be sent as the **first message to each newly connected client**. | MVP |
-| FR-09 | The application shall display a preview of the loaded file (**first 10 rows**, field count, total line count) in the GUI. Invalid lines shall be highlighted in red with a total discarded count. | MVP |
+| FR-09 | The application shall display a preview of the loaded file (**first 10 rows**, field count, total line count) in the GUI. During background scan, totals may be provisional and must be clearly labeled as such. Invalid lines shall be highlighted in red with a total discarded count. | MVP |
 | FR-10 | The application shall handle files with inconsistent line endings (CRLF, LF). | MVP |
 | FR-11 | The application shall support UTF-8 encoded files. | MVP |
 | FR-12 | The application shall validate column count consistency on load. Lines with inconsistent column counts shall be **discarded** and logged. | MVP |
+| FR-12a | File indexing and validation shall run in a background task and shall not block GUI interaction. | MVP |
+| FR-12b | Users shall be able to start transmission before full-file indexing/validation completes. Progress and invalid-line counts shall be finalized when scanning completes. | MVP |
+| FR-12c | Delimited parsing shall support RFC 4180-style CSV semantics: quoted fields, escaped quotes, embedded delimiters, and embedded newlines. | MVP |
 
 ### 3.3 Data Transmission
 
@@ -146,6 +155,7 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-19 | The application shall allow the user to **pause and resume** transmission without dropping connections. | MVP |
 | FR-20 | The GUI shall display the current line number, total lines, and a progress indicator during transmission. | MVP |
 | FR-20a | In server broadcast mode, automatic transmission shall **pause when zero clients are connected** and resume when at least one client reconnects. | MVP |
+| FR-20b | While paused due to zero connected clients, the transmission line pointer shall not advance. | MVP |
 | FR-21 | Post-MVP: Support **original-rate mode** — send lines at the rate implied by the timestamp deltas in the original data. | Post-MVP |
 | FR-22 | Post-MVP: Support sending a **subset of lines** (start/end line, first N lines). | Post-MVP |
 
@@ -168,6 +178,9 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-30 | In server mode, the application shall allow configuring the **bind address** (default: `0.0.0.0`). | MVP |
 | FR-31 | In TCP client mode, the application shall **auto-reconnect** on disconnect with exponential backoff. The GUI shall display reconnect status and total reconnect count. | MVP |
 | FR-32 | In TCP server mode, the application shall monitor per-client write buffers and **disconnect slow clients** that cannot keep up. The GUI shall display blocking status and which clients were disconnected. | MVP |
+| FR-32a | Backpressure management shall use per-client outbound queues with configurable high/low watermarks and a hard queue-cap in bytes. | MVP |
+| FR-32b | A client shall be marked blocked when it crosses the high watermark, cleared when below the low watermark, and disconnected when blocked duration exceeds timeout or hard-cap is reached. | MVP |
+| FR-32c | In UDP reply-to-senders mode, recipient cache maintenance shall enforce TTL expiry, maximum entry cap, periodic cleanup, and deterministic eviction policy (default: LRU). | MVP |
 | FR-33 | The application shall support configurable **connection timeout** and **send timeout** values, both defaulting to **10 seconds**. | MVP |
 | FR-34 | Post-MVP: Optional **TLS/SSL** support with certificate configuration. | Post-MVP |
 
@@ -178,9 +191,9 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-35 | The application shall log all connection events (connect, disconnect, reconnect, slow client disconnect) in **JSON structured format**. | MVP |
 | FR-36 | The application shall log transmission statistics: features sent, bytes sent, elapsed time, current rate (feat/s and KB/s). | MVP |
 | FR-37 | The application shall write JSON logs to a configurable log file with **log rotation** (default: 10 MB max, configurable). | MVP |
-| FR-38 | The GUI shall display a live scrolling log view showing recent JSON log entries. | MVP |
+| FR-38 | The GUI shall provide an on-demand log panel that loads and refreshes JSON log entries only when the user clicks **Load** or **Refresh**. No automatic live tailing/streaming is required. | MVP |
 | FR-39 | Log verbosity shall be configurable (DEBUG, INFO, WARN, ERROR). | MVP |
-| FR-40 | Post-MVP: Dedicated log viewer UI component with filtering and search. | Post-MVP |
+| FR-40 | Post-MVP: Dedicated on-demand log viewer UI component with filtering, search, and export. | Post-MVP |
 
 ### 3.7 Configuration Management
 
@@ -192,6 +205,7 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-44 | The application shall **auto-load the last-used configuration** on startup. | MVP |
 | FR-45 | Configuration files shall include an integer **schema_version** field. | MVP |
 | FR-46 | On config load, the application shall migrate known older schema versions; unknown or incompatible versions shall be rejected and replaced with defaults while preserving the original file and surfacing a clear warning. | MVP |
+| FR-47 | The application shall not auto-overwrite incompatible configuration files; migrated configurations are persisted only when the user explicitly saves. | MVP |
 
 ---
 
@@ -207,6 +221,8 @@ These answers were provided by the project owner and inform all requirements bel
 | NFR-06 | The application shall shut down gracefully on window close or SIGINT/SIGTERM, closing all connections cleanly. | MVP |
 | NFR-07 | The application shall not crash or hang when a client disconnects unexpectedly. | MVP |
 | NFR-08 | The GUI shall remain responsive during file loading, transmission, and high connection counts. All I/O shall be async. | MVP |
+| NFR-09 | On startup, the application shall run a runtime preflight check for Python version and tkinter/Tk availability; missing prerequisites shall produce actionable setup guidance instead of stack traces. | MVP |
+| NFR-10 | Large-file indexing/validation must execute in background without blocking startup; UI controls remain usable while scanning is in progress. | MVP |
 
 ---
 
@@ -296,7 +312,8 @@ These answers were provided by the project owner and inform all requirements bel
 │  Rate: 10.1 feat/s  |  42.3 KB/s  |  Elapsed: 00:02:04  │
 │  ⚠ Blocked: 1 client  |  Disconnected (slow): 1          │
 ├──────────────────────────────────────────────────────────┤
-│  Log (JSON):                                [Clear] [Save]│
+│  Log File: tcp-sim.log                  [Load] [Refresh]  │
+│  Last Loaded: 10:24:31                  Entries: 2,000    │
 │  {"ts":"...","event":"client_connect","addr":"10.0.1.5"} │
 │  {"ts":"...","event":"send","line":1247,"bytes":87}      │
 │  {"ts":"...","event":"slow_client","addr":"10.0.1.8"...} │
@@ -317,7 +334,7 @@ The recommended pattern is a **controller** layer that bridges the GUI thread an
 Both TCP and UDP are supported. UDP has no concept of "connections" so:
 - **UDP Server mode:** Two recipient discovery options, user-selectable in the GUI:
   - **Multicast:** Send datagrams to a configured multicast group address.
-  - **Reply to senders:** Send datagrams to all addresses that have previously sent a packet to our listen port. Default recipient cache TTL is **300 seconds** with a cap of **256 entries**; both values are configurable.
+  - **Reply to senders:** Send datagrams to all addresses that have previously sent a packet to our listen port. Default recipient cache TTL is **300 seconds** with a cap of **256 entries**, cleanup every **30 seconds**, and **LRU** eviction when full; all values are configurable.
 - **UDP Client mode:** Send datagrams to a configured host:port. No connection, no reconnect logic needed.
 
 UDP mode should clearly indicate in the UI that delivery is not guaranteed.
@@ -333,6 +350,7 @@ All connected clients receive the same line at the same time. A client that conn
 - Continue broadcasting to remaining clients when one disconnects
 - Optionally re-send the header row to newly connected clients (if "send header" is enabled)
 - Pause automatic broadcast progression while zero clients are connected; resume when a client reconnects
+- Keep line pointer stable while paused (no implicit advancement)
 - Not reset the line position when a client disconnects and reconnects
 - Log connect/disconnect events at INFO level (not WARN/ERROR — these are expected)
 
@@ -344,18 +362,32 @@ All connected clients receive the same line at the same time. A client that conn
 - If "no header" is configured, the first line is treated as data.
 
 #### CSV Validation
-On file load, check column count consistency. Lines with inconsistent column counts are **discarded** (not sent) and logged with a warning. The GUI file preview should flag invalid lines.
+On file load, check column count consistency using CSV parsing rules that honor quoting and escaping semantics. Lines with inconsistent column counts are **discarded** (not sent) and logged with a warning. The GUI file preview should flag invalid lines.
 
 #### File Reading Strategy
-Stream the file line-by-line using a buffered reader. Do not load the entire file into memory. For looping, seek back to the start of data (after header row, if any). Count total lines on initial load (single pass) for progress display.
+Stream the file line-by-line using a buffered reader. Do not load the entire file into memory. For looping, seek back to the start of data (after header row, if any).
+
+Use a progressive background scan for total-line and invalid-line accounting:
+1. Start scan asynchronously at file load.
+2. Allow transmission start before scan completion.
+3. Mark total/invalid counts as provisional until scan completes.
+4. Publish periodic scan progress updates to the GUI.
 
 #### Backpressure & Slow Clients
-Monitor per-client TCP write buffer. If a client's buffer exceeds a threshold:
+Use per-client outbound queues and watermarks. Default thresholds (configurable):
+- High watermark: **256 KB**
+- Low watermark: **128 KB**
+- Hard cap: **512 KB**
+
+If a client's queue exceeds the high watermark:
 1. Log the blocking status (JSON structured log).
 2. Show blocking indicator in the GUI.
 3. If the client cannot drain within the configured timeout (default: **10 seconds**), **disconnect** it.
 4. Log the disconnection with client address and reason.
 5. Show disconnected slow clients in the GUI status area.
+
+Clear blocked status only after queue depth falls below the low watermark.
+Disconnect immediately if hard cap is exceeded.
 
 Do **not** slow down the broadcast for other clients because one client is slow.
 
@@ -374,12 +406,23 @@ Data transmission pauses during reconnection and resumes from the current line (
 4. Replace the field value in the outgoing line with the new timestamp formatted per the configured pattern.
 5. Supported formats (MVP): ISO 8601, epoch milliseconds, epoch seconds (integer), epoch seconds (fractional).
 
+Clock/timezone policy:
+- Normalize parsed timestamps to **UTC** internally.
+- Use monotonic time for scheduler delays to avoid wall-clock jumps affecting send cadence.
+- Use wall-clock UTC only when constructing replacement timestamps.
+
 This preserves the relative timing between events while anchoring them to the current wall clock.
 
 #### Rate Control
 - Primary unit: **features per second** (1 feature = 1 CSV data line).
 - The GUI displays both features/s and KB/s in real time.
 - Post-MVP: **original-rate mode** — use timestamp deltas between consecutive rows to determine send timing.
+
+#### Log Viewing Behavior
+- The simulator writes JSON logs to file continuously.
+- The GUI log panel is **on-demand only**: logs are loaded/refreshed when the user requests it.
+- No automatic live log streaming/tailing in MVP (or post-MVP by default).
+- On-demand refresh reduces tkinter UI update pressure during high-throughput sends.
 
 ### 5.4 Configuration
 
@@ -410,14 +453,21 @@ The config file stores all user-configurable settings:
   "send_timeout_seconds": 10,
   "slow_client_timeout_seconds": 10,
   "reconnect_max_backoff_seconds": 30,
+  "client_queue_high_watermark_bytes": 262144,
+  "client_queue_low_watermark_bytes": 131072,
+  "client_queue_hard_cap_bytes": 524288,
   "log_rotation_max_bytes": 10485760,
   "udp_recipient_mode": "reply_to_senders",
   "udp_recipient_cache_ttl_seconds": 300,
-  "udp_recipient_cache_max_entries": 256
+  "udp_recipient_cache_max_entries": 256,
+  "udp_recipient_cache_cleanup_interval_seconds": 30,
+  "udp_recipient_cache_eviction_policy": "lru"
 }
 ```
 
 The GUI is the primary interface. All settings are configurable through the GUI. A future CLI mode could consume the same JSON config files.
+
+Before loading user config, run startup preflight checks for Python runtime and tkinter/Tk availability so missing dependencies fail with actionable guidance.
 
 #### 5.4.1 Config Migration Policy
 Config compatibility follows a hybrid policy designed for safety and convenience in a standalone tool:
@@ -464,7 +514,7 @@ tcp-server-simulator/
 │           ├── file_panel.py        # File selection, preview, field config
 │           ├── control_panel.py     # Start/stop/pause/step, rate control
 │           ├── status_panel.py      # Stats, connection list, blocking indicators
-│           └── log_panel.py         # Live JSON log display
+│           └── log_panel.py         # On-demand JSON log load/refresh
 ├── tests/
 │   ├── test_file_reader.py
 │   ├── test_scheduler.py
@@ -511,35 +561,74 @@ The following gaps from the original copilot-instructions have been resolved in 
 
 ### Implementation Risks
 
-1. **GUI + asyncio threading.** This is where Python GUI apps go to die. The GUI event loop and the asyncio event loop are fundamentally different beasts. You need a clean threading model from day one or you'll get freezes, race conditions, and deadlocks. Plan the controller layer carefully.
+1. **GUI and asyncio concurrency boundaries**
+- Risk: UI freezes, race conditions, or deadlocks when crossing thread/event-loop boundaries.
+- Mitigation: enforce controller boundary + thread-safe queues; keep GUI updates batched and periodic; ensure cancellation-aware shutdown paths.
+- Verification: stress tests with rapid start/stop/pause and reconnect storms.
 
-2. **UDP "server" semantics are weird.** UDP is connectionless. Your "server mode" for UDP needs a clear definition of who receives the data. "Send to everyone who's ever sent us a packet" sounds simple until you realize you need to track stale addresses, handle NAT, and decide when to stop sending to a client that went away.
+2. **Large-file indexing behavior**
+- Risk: slow scans can appear as hangs or produce confusing counters.
+- Mitigation: progressive background scan with clearly labeled provisional totals and non-blocking controls.
+- Verification: multi-GB file smoke tests with immediate send-start while scan is in progress.
 
-3. **Timestamp rewriting with custom formats.** Parsing epoch seconds as both integer and fractional means you need to distinguish `1712000000` from `1712000000.123`. Edge cases: negative timestamps, timestamps before epoch, timestamps in the year 2038+ as 32-bit integers. Define your parsing rules tightly.
+3. **Backpressure under fan-out load**
+- Risk: one slow client degrades all clients or causes unbounded memory growth.
+- Mitigation: per-client queues with high/low watermarks, hard-cap disconnects, and blocked-state visibility.
+- Verification: soak test with 50 clients including intentionally slow consumers.
 
-4. **Streaming + looping + validation.** You're streaming the file (good), but you also need to count total lines on load (for progress display), skip invalid lines (for validation), and seek back to data start (for looping). Make sure your file reader handles all three concerns without loading the file into memory.
+4. **UDP recipient-cache correctness**
+- Risk: stale endpoints, cache growth, and noisy delivery behavior in reply-to-senders mode.
+- Mitigation: TTL expiry, entry cap, periodic cleanup, and deterministic eviction policy (LRU).
+- Verification: long-running UDP tests with churned sender IP/port pairs.
 
-5. **"Source only" distribution.** Your users are Product Engineers. If they have to debug Python version conflicts and missing dependencies, they will abandon this tool. At minimum, provide a `requirements.txt` with pinned versions and clear setup instructions. Consider a `Makefile` or `justfile` for one-command setup.
+5. **Timestamp correctness across clocks and formats**
+- Risk: replay drift from timezone ambiguity or wall-clock changes.
+- Mitigation: UTC normalization for parsed timestamps and monotonic clock for scheduler delays.
+- Verification: test vectors for epoch/int/fractional/ISO timestamps across timezone boundaries.
 
-6. **Velocity's connect/disconnect churn.** Per the reference docs, Velocity disconnects and reconnects multiple times during feed configuration. If your server logs these as errors or — worse — crashes on sudden disconnects, your PEs will think the tool is broken during perfectly normal operation. The connection manager must treat rapid connect/disconnect cycles as business as usual. Write buffer cleanup on disconnect must be bulletproof.
+6. **Config compatibility across versions**
+- Risk: startup failures or silent misconfiguration when config schema evolves.
+- Mitigation: `schema_version`, deterministic migrations for known versions, safe fallback defaults for incompatible versions, no automatic overwrite.
+- Verification: migration tests from each historical schema fixture.
 
-7. **Header-on-connect timing.** If "send header" is enabled and you send the header to each new client on connect, you need to handle the race condition where a client connects between broadcast ticks. If the header send fails because the client already disconnected (Velocity's testConnection phase), you must not propagate that error.
+7. **Source-only environment drift**
+- Risk: standalone setup failures (Python/Tk mismatch, missing runtime pieces).
+- Mitigation: startup preflight checks + explicit prerequisites and troubleshooting guidance in README.
+- Verification: fresh-machine install tests on Windows and Linux.
+
+8. **Velocity lifecycle connection churn**
+- Risk: false-positive errors and unstable behavior during expected connect/disconnect cycles.
+- Mitigation: treat lifecycle churn as expected state transitions, not exceptional paths.
+- Verification: scripted testConnection/sampleMessages/feed-run loop test.
+
+9. **Header-on-connect race conditions**
+- Risk: transient disconnects during header send can surface as noisy failures.
+- Mitigation: idempotent per-connection header send with graceful handling for disconnect-before-write.
+- Verification: repeated connect/disconnect fuzzing with header mode enabled.
 
 ### What Users Will Still Hate
 
-1. **Having to install Python.** Even "source only" requires a working Python 3.10+ environment. Not every Windows machine has one. Include a "Prerequisites" section in the README with exact install steps.
+1. **Initial setup friction**
+- Pain: source-only mode still requires a working Python + Tk environment.
+- Mitigation: provide exact install commands and preflight diagnostics.
 
-2. **GUI framework choice matters.** You chose tkinter. It will look like a tool from 1997 because it basically is. Your users will live with it because "it doesn't have to be nice" — until someone shows it to a stakeholder. At that point, consider `ttk` themed widgets at minimum. Also: tkinter's `Treeview` widget for the file preview table is adequate but quirky — red highlighting for invalid rows will require tag-based styling.
+2. **Functional-but-minimal tkinter UX**
+- Pain: dense tables and controls can feel dated and less discoverable.
+- Mitigation: use clear defaults, sensible grouping, keyboard shortcuts, and consistent labels.
 
-3. **No way to see what was *actually sent*.** The preview shows file contents, but users will want to see the exact bytes that went over the wire — especially when timestamp rewriting is active. Consider a "last sent line" display in the status panel.
+3. **Difficulty validating sent output quickly**
+- Pain: users want fast confidence about what was actually emitted after timestamp rewrite.
+- Mitigation: show last-sent payload summary and add copy/export affordances in status/log panels.
 
-4. **Config files are JSON.** Your users will forget trailing commas, mistype a boolean, and get a confusing parse error. Provide very clear error messages on config load failure, ideally pointing to the exact line/field that's wrong.
+4. **Manual JSON editing errors**
+- Pain: malformed config files are easy to create.
+- Mitigation: schema-aware validation messages that identify exact field and failure reason.
 
 ---
 
 ## 8. Resolved Open Questions
 
-All design questions have been resolved. See Section 2 for the complete decision log including RQ1–RQ13.
+All design questions have been resolved. See Section 2 for the complete decision log including RQ1–RQ19.
 
 ---
 
@@ -552,7 +641,7 @@ All design questions have been resolved. See Section 2 for the complete decision
 | **Phase 1: Foundation** | Project structure, config schema + schema versioning/migration, JSON config load/save, streaming file reader with validation, unit tests | No GUI, no networking yet. Just the engine core. |
 | **Phase 2: Transport** | TCP server (broadcast), TCP client (with auto-reconnect), UDP server, UDP client, connection manager with backpressure/slow client detection | Test with netcat/telnet. No GUI yet. |
 | **Phase 3: Scheduler** | Rate control (features/s), step mode, auto mode, loop mode, pause/resume, timestamp rewriting (ISO 8601, epoch millis, epoch seconds) | Integrates engine + transport. Testable via scripts. |
-| **Phase 4: GUI** | Main window, config panel, file browser + preview, transport controls (start/stop/pause/step), status panel (connections, rate, progress, blocking), live log panel, config save/load | Full GUI wired to engine. This is the MVP delivery. |
+| **Phase 4: GUI** | Main window, config panel, file browser + preview, transport controls (start/stop/pause/step), status panel (connections, rate, progress, blocking), on-demand log panel (load/refresh), config save/load | Full GUI wired to engine. This is the MVP delivery. |
 
 ### Post-MVP
 
@@ -566,4 +655,4 @@ All design questions have been resolved. See Section 2 for the complete decision
 
 ---
 
-*This document should be treated as a living artifact. Update it as open questions are resolved.*
+*This document should be treated as a living artifact. Update it as requirements evolve and implementation insights are validated.*

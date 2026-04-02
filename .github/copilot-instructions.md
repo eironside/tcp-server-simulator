@@ -27,7 +27,7 @@ The TCP Simulator should have the following features:
 7. Allow the user to walk through the data one line at a time or send the lines automatically and loop back to the beginning.
 8. Allow the user to choose the file they want to load data from for sending.
 9. Support both TCP and UDP protocols.
-10. GUI with file preview, transport controls, status panel, and live JSON log view.
+10. GUI with file preview, transport controls, status panel, and on-demand JSON log load/refresh.
 11. JSON configuration file save/load.
 12. Backpressure handling: block and disconnect slow clients with GUI indicators.
 13. Header row: configurable whether to send to clients.
