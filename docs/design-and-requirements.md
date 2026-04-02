@@ -20,6 +20,49 @@ The tool is a spiritual successor to the GeoEvent TCP Simulator (Java), rebuilt 
 
 **Primary Users:** Product Engineers testing ArcGIS Velocity for Enterprise product functionality. The tool is interactive-first, not designed for CI pipeline automation.
 
+> **Reference Material:** The `docs/previous/` directory contains Confluence exports documenting how PEs previously tested Velocity TCP feeds using crude Python scripts and SocketTest. These informed the testing context below but do not define requirements for this tool.
+
+### 1.1 Velocity Testing Context
+
+Understanding how ArcGIS Velocity uses TCP connections is essential because it dictates server mode behavior.
+
+**Velocity TCP Client Feed (our primary use case):**
+Velocity acts as a TCP client that connects to an external TCP server to ingest data. Our simulator in **Server mode** fills the role of that external TCP server.
+
+```
+┌───────────────────┐         ┌───────────────────┐
+│  Our Simulator     │◄────────│  ArcGIS Velocity   │
+│  (Server mode)     │────────►│  (TCP Client Feed)  │
+│  Sends CSV lines   │         │  Ingests data       │
+└───────────────────┘         └───────────────────┘
+```
+
+**Velocity's connection lifecycle during feed setup:**
+1. **testConnection** — Velocity connects to verify the server is reachable, then disconnects.
+2. **sampleMessages** — Velocity reconnects and reads a few messages to derive the data schema, then disconnects.
+3. **Feed run** — Velocity reconnects a final time for the actual data feed.
+
+This connect → disconnect → reconnect pattern happens every time a feed is configured. Previous tools (SocketTest, simple Python scripts) broke here because they couldn't handle the repeated disconnections. **Our server mode must treat this as normal behavior** — connections that come and go are expected, not errors.
+
+**Velocity TCP Client Output (secondary use case):**
+Velocity RATs can also output data to an external TCP server. In this scenario, our simulator would be in **Server mode listening** — but the current scope only covers *sending* data. Receiving data from Velocity is out of scope for MVP.
+
+**Velocity TCP Server Feed (reverse direction):**
+Our simulator in **Client mode** connects to Velocity's TCP Server feed to push data inward. Less commonly tested but supported.
+
+### 1.2 Data Format Considerations
+
+**The simulator is format-agnostic.** It sends raw text lines terminated by a configurable record separator. The downstream consumer (Velocity) interprets the format.
+
+Velocity supports these formats for TCP feeds:
+- Delimited (comma, pipe, semicolon, tab — our primary focus)
+- JSON
+- GeoJSON
+- EsriJSON
+- XML
+
+Because our simulator reads a file and sends it line-by-line, it can serve any of these formats as long as the file contains properly formatted data with one record per line. The simulator does not parse or validate the data format itself — only column count consistency for delimited files.
+
 ---
 
 ## 2. Resolved Design Decisions
@@ -61,6 +104,7 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-02 | The application shall support **Client mode**: connect to a remote host:port and transmit data. | MVP |
 | FR-03 | The user shall be able to switch between Server and Client modes via the GUI without restarting the application. | MVP |
 | FR-04 | The application shall support **TCP** and **UDP** protocols, selectable in the GUI. | MVP |
+| FR-04a | In server mode, the application shall gracefully handle clients that **connect and disconnect repeatedly** (e.g., Velocity's testConnection → sampleMessages → feed run lifecycle). Disconnections shall not interrupt transmission to other clients or cause errors. | MVP |
 
 ### 3.2 File Loading & Parsing
 
@@ -69,7 +113,7 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-05 | The application shall allow the user to select and load a delimited text file (CSV, TSV, or custom delimiter) via a file browser dialog. | MVP |
 | FR-06 | The user shall be able to configure the field delimiter character in the GUI. | MVP |
 | FR-07 | The application shall support a configurable header row toggle. When enabled, the first line is treated as field names (used for field selection dropdowns). | MVP |
-| FR-08 | The user shall be able to toggle whether the header row is sent to clients as the first message. | MVP |
+| FR-08 | The user shall be able to toggle whether the header row is sent to clients. When enabled in server mode, the header shall be sent as the **first message to each newly connected client**. | MVP |
 | FR-09 | The application shall display a preview of the loaded file (first N rows, field count, total line count) in the GUI. | MVP |
 | FR-10 | The application shall handle files with inconsistent line endings (CRLF, LF). | MVP |
 | FR-11 | The application shall support UTF-8 encoded files. | MVP |
@@ -269,10 +313,18 @@ Each CSV line is sent as a newline-terminated string. The receiver is expected t
 #### Server Mode: Broadcast
 All connected clients receive the same line at the same time. A client that connects mid-stream joins at whatever line is current. This is simpler and matches the testing use case.
 
+**Velocity lifecycle handling:** In server mode, clients (particularly Velocity) will connect and disconnect multiple times during feed setup (testConnection, sampleMessages, feed run). The server must:
+- Accept and cleanly release connections without error messages cluttering the log
+- Continue broadcasting to remaining clients when one disconnects
+- Optionally re-send the header row to newly connected clients (if "send header" is enabled)
+- Not reset the line position when a client disconnects and reconnects
+- Log connect/disconnect events at INFO level (not WARN/ERROR — these are expected)
+
 #### Header Row Handling
 - The first line of the CSV is assumed to be a header by default.
 - The header is used for field name display in the GUI (e.g., timestamp field dropdown).
 - The user can toggle whether the header is sent to clients as the first message.
+- When "send header" is enabled, the header should be sent as the **first message to each new client connection**. This is critical for Velocity's sampleMessages phase — Velocity uses the first few messages to derive the data schema, and the header row helps it map field names correctly.
 - If "no header" is configured, the first line is treated as data.
 
 #### CSV Validation
@@ -434,6 +486,10 @@ The following gaps from the original copilot-instructions have been resolved in 
 4. **Streaming + looping + validation.** You're streaming the file (good), but you also need to count total lines on load (for progress display), skip invalid lines (for validation), and seek back to data start (for looping). Make sure your file reader handles all three concerns without loading the file into memory.
 
 5. **"Source only" distribution.** Your users are Product Engineers. If they have to debug Python version conflicts and missing dependencies, they will abandon this tool. At minimum, provide a `requirements.txt` with pinned versions and clear setup instructions. Consider a `Makefile` or `justfile` for one-command setup.
+
+6. **Velocity's connect/disconnect churn.** Per the reference docs, Velocity disconnects and reconnects multiple times during feed configuration. If your server logs these as errors or — worse — crashes on sudden disconnects, your PEs will think the tool is broken during perfectly normal operation. The connection manager must treat rapid connect/disconnect cycles as business as usual. Write buffer cleanup on disconnect must be bulletproof.
+
+7. **Header-on-connect timing.** If "send header" is enabled and you send the header to each new client on connect, you need to handle the race condition where a client connects between broadcast ticks. If the header send fails because the client already disconnected (Velocity's testConnection phase), you must not propagate that error.
 
 ### What Users Will Still Hate
 
