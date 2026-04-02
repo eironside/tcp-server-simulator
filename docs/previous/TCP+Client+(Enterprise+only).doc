@@ -1,0 +1,1028 @@
+Date: Thu, 2 Apr 2026 10:42:39 -0700 (PDT)
+Message-ID: <1233803828.5907.1775151759139@red-app-dev-p01.esri.com>
+Subject: Exported From Confluence
+MIME-Version: 1.0
+Content-Type: multipart/related; 
+	boundary="----=_Part_5906_772712730.1775151759139"
+
+------=_Part_5906_772712730.1775151759139
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Content-Location: file:///C:/exported.html
+
+<html xmlns:o=3D'urn:schemas-microsoft-com:office:office'
+      xmlns:w=3D'urn:schemas-microsoft-com:office:word'
+      xmlns:v=3D'urn:schemas-microsoft-com:vml'
+      xmlns=3D'urn:w3-org-ns:HTML'>
+<head>
+    <meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dutf-8=
+">
+    <title>TCP Client (Enterprise only)</title>
+    <!--[if gte mso 9]>
+    <xml>
+        <o:OfficeDocumentSettings>
+            <o:TargetScreenSize>1024x640</o:TargetScreenSize>
+            <o:PixelsPerInch>72</o:PixelsPerInch>
+            <o:AllowPNG/>
+        </o:OfficeDocumentSettings>
+        <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>90</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+        </w:WordDocument>
+    </xml>
+    <![endif]-->
+    <style>
+                <!--
+        @page Section1 {
+            size: 8.5in 11.0in;
+            margin: 1.0in;
+            mso-header-margin: .5in;
+            mso-footer-margin: .5in;
+            mso-paper-source: 0;
+        }
+
+        table {
+            border: solid 1px;
+            border-collapse: collapse;
+        }
+
+        table td, table th {
+            border: solid 1px;
+            padding: 5px;
+        }
+
+        td {
+            page-break-inside: avoid;
+        }
+
+        tr {
+            page-break-after: avoid;
+        }
+
+        div.Section1 {
+            page: Section1;
+        }
+
+        /* Confluence print stylesheet. Common to all themes for print medi=
+a */
+/* Full of !important until we improve batching for print CSS */
+
+@media print {
+    #main {
+        padding-bottom: 1em !important; /* The default padding of 6em is to=
+o much for printouts */
+    }
+
+    body {
+        font-family: Arial, Helvetica, FreeSans, sans-serif;
+        font-size: 10pt;
+        line-height: 1.2;
+    }
+
+    body, #full-height-container, #main, #page, #content, .has-personal-sid=
+ebar #content {
+        background: #fff !important;
+        color: #000 !important;
+        border: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+
+    a, a:link, a:visited, a:focus, a:hover, a:active {
+        color: #000;
+    }
+
+    #content h1,
+    #content h2,
+    #content h3,
+    #content h4,
+    #content h5,
+    #content h6 {
+        font-family: Arial, Helvetica, FreeSans, sans-serif;
+        page-break-after: avoid;
+    }
+
+    pre {
+        font-family: Monaco, "Courier New", monospace;
+    }
+
+    #header,
+    .aui-header-inner,
+    #navigation,
+    #sidebar,
+    .sidebar,
+    #personal-info-sidebar,
+    .ia-fixed-sidebar,
+    .page-actions,
+    .navmenu,
+    .ajs-menu-bar,
+    .noprint,
+    .inline-control-link,
+    .inline-control-link a,
+    a.show-labels-editor,
+    .global-comment-actions,
+    .comment-actions,
+    .quick-comment-container,
+    #addcomment {
+        display: none !important;
+    }
+
+    /* CONF-28544 cannot print multiple pages in IE */
+    #splitter-content {
+        position: relative !important;
+    }
+
+    .comment .date::before {
+        content: none !important; /* remove middot for print view */
+    }
+
+    h1.pagetitle img {
+        height: auto;
+        width: auto;
+    }
+
+    .print-only {
+        display: block;
+    }
+
+    #footer {
+        position: relative !important; /* CONF-17506 Place the footer at en=
+d of the content */
+        margin: 0;
+        padding: 0;
+        background: none;
+        clear: both;
+    }
+
+    #poweredby {
+        border-top: none;
+        background: none;
+    }
+
+    #poweredby li.print-only {
+        display: list-item;
+        font-style: italic;
+    }
+
+    #poweredby li.noprint {
+        display: none;
+    }
+
+    /* no width controls in print */
+    .wiki-content .table-wrap,
+    .wiki-content p,
+    .panel .codeContent,
+    .panel .codeContent pre,
+    .image-wrap {
+        overflow: visible !important;
+    }
+
+    /* TODO - should this work? */
+    #children-section,
+    #comments-section .comment,
+    #comments-section .comment .comment-body,
+    #comments-section .comment .comment-content,
+    #comments-section .comment p {
+        page-break-inside: avoid;
+    }
+
+    #page-children a {
+        text-decoration: none;
+    }
+
+    /**
+     hide twixies
+
+     the specificity here is a hack because print styles
+     are getting loaded before the base styles. */
+    #comments-section.pageSection .section-header,
+    #comments-section.pageSection .section-title,
+    #children-section.pageSection .section-header,
+    #children-section.pageSection .section-title,
+    .children-show-hide {
+        padding-left: 0;
+        margin-left: 0;
+    }
+
+    .children-show-hide.icon {
+        display: none;
+    }
+
+    /* personal sidebar */
+    .has-personal-sidebar #content {
+        margin-right: 0px;
+    }
+
+    .has-personal-sidebar #content .pageSection {
+        margin-right: 0px;
+    }
+
+    .no-print, .no-print * {
+        display: none !important;
+    }
+}
+-->
+    </style>
+</head>
+<body>
+    <h1>TCP Client (Enterprise only)</h1>
+    <div class=3D"Section1">
+        <p><br></p>
+<h2 id=3D"TCPClient(Enterpriseonly)-Backgroundandstrategicfit:">Background =
+and strategic fit:</h2>
+<ul>
+<li>TCP Client feed is available in Velocity on Enterprise only</li>
+<li>Initial release/design of this feed provides partial equivalency with t=
+he related feed in GeoEvent Server.&nbsp;&nbsp;</li>
+</ul>
+<h2 id=3D"TCPClient(Enterpriseonly)-TestingResources:">Testing Resources:</=
+h2>
+<p>To test TCP Client feed, you can run a Python script like the one below =
+and use the IP and port numbers as the parameters to the TCP Client feed or=
+ you can use a tool like SocketTest.&nbsp; Both approaches will simulate a =
+TCP Server, which sends data to the TCP Client feed in Velocity.</p>
+<p>When configuring the TCP Client feed in Velocity, it makes a connection =
+to the TCP Server and ensures that it is available and ready to receive dat=
+a. This means that the TCP Server has to be running&nbsp;<em>before&nbsp;</=
+em>you configure the TCP Client feed.&nbsp;&nbsp;</p>
+<h4 id=3D"TCPClient(Enterpriseonly)-PythonScriptApproach">Python Script App=
+roach</h4>
+<ul>
+<li>Pre-requisite: have Python installed on the machine.&nbsp; If you need =
+to <a href=3D"https://confluencewikidev.esri.com/(https:/www.python.org/dow=
+nloads/" rel=3D"nofollow"> install</a> Python, check the box to "Add Python=
+ to PATH" during the install process.</li>
+<li>Delimited Data:=20
+<ul>
+<li>Comma, pipe, semi-colon, and tab are the default delimiters supported b=
+y Velocity.&nbsp;</li>
+<li>When sending delimited data only, each message/record must be separated=
+ by a delimiter so that the TCP client knows where one message ends and ano=
+ther beings.&nbsp; The script uses a newling "\n" as the delimiter, but thi=
+s can be adjusted in the <code>recordTerminator</code>&nbsp; variable</li>
+</ul></li>
+</ul>
+<p>To use the script:</p>
+<ul>
+<li>You must run the Python script on a machine that is accessible to the m=
+achine that is running Velocity on Enterprise.&nbsp; The script below is co=
+nfigured to run on the same machine that has VoE installed (and uses 127.0.=
+0.1 which is localhost).&nbsp; If you run the script on a different machine=
+, you'll want to update the IP address accordingly.</li>
+<li>Script is designed so that you can specify the kind of data to send (<c=
+ode>esriJSON</code> , <code>JSON</code> , <code>XML</code> , <code>delimite=
+dComma</code> , <code>delimitedPipe</code> , <code>delimitedSemiColon</code=
+> , <code>delimitedTab, etc.)</code></li>
+<li>To change the kind of data that is sent, edit the <code>message</code>&=
+nbsp; variable</li>
+<li>The script will send the same message on repeat, every 1 second</li>
+<li>Once your Python script is running, you'll create a TCP Feed in V4E and=
+ use the same IP address and Port that is used in the Python script.&nbsp;&=
+nbsp;</li>
+<li>If manually configuring the feed, you'll notice that the Python script =
+sends a print statement that a resource has connected</li>
+<li>If manually configuring the feed, you'll notice during sampleMessages t=
+hat you will get print statements of the data that is sent and used to deri=
+ve the feed schema</li>
+<li>Once the TCP Client feed is running inV4E, you will see that the same p=
+oint is sent on repeat.&nbsp; The point is in the Redlands area.</li>
+</ul>
+<p><br></p>
+<div class=3D"code panel pdl" style=3D"border-width: 1px;">
+<div class=3D"codeHeader panelHeader pdl hide-border-bottom" style=3D"borde=
+r-bottom-width: 1px;">
+<b class=3D"code-title">Expand for Python script</b><span class=3D"collapse=
+-source expand-control" style=3D"display:none;"><span class=3D"expand-contr=
+ol-icon icon">&nbsp;</span><span class=3D"expand-control-text">Expand sourc=
+e</span></span><span class=3D"collapse-spinner-wrapper"></span>
+</div>
+<div class=3D"codeContent panelContent pdl hide-toolbar">
+<pre class=3D"syntaxhighlighter-pre" data-syntaxhighlighter-params=3D"brush=
+: py; gutter: true; theme: Confluence; collapse: true" data-theme=3D"Conflu=
+ence">import socket
+import time
+
+HOST =3D '127.0.0.1'  # Standard loopback interface address (localhost)
+PORT =3D 5005        # Port to listen on (non-privileged ports are &gt; 102=
+3)
+INTERVAL_SECONDS =3D 1
+RECORD_TERMINATOR=3D b"\n"
+
+esriJSON =3D"""{
+  "geometryType": "esriGeometryPoint",
+  "spatialReference": {
+    "wkid": 4326
+  },
+  "features": [
+    {
+      "geometry": {
+        "x": -117.18,
+        "y": 34.055564
+      },
+      "attributes": {
+        "stringField": "This is EsriJSON",
+        "int32Field": 5,
+        "int64Field": 5555555,
+        "float32Field": -117.18,
+        "float64Field": 34.055564,
+        "dateField": 1752779083,
+        "booleanField": true
+      }
+    }
+  ]
+}
+"""
+
+delimitedPipe =3D"This is a delimitedPipe|5|2222222|1756136797208|true|-117=
+.18,34.055564"
+delimitedComma =3D"""This is a delimitedComma,5,1111111,1752779083,True,"LI=
+NESTRING (-121.49 38.58, -117.18 34.05)" """
+delimitedSemiColon =3D"This is a delimitedSemiColon;5;333333;-117.18;34.055=
+564;1752779083;true;POLYGON ((-127.617188 31.203405, -110.302734 30.902225,=
+ -120.629883 43.580391, -127.617188 31.203405))"=20
+delimitedTab =3D "This is a delimitedTab=095=09333333=09-117.18=0934.055564=
+=091752779083=09true=09MULTIPOINT ((-121.49 38.58), (-117.18 34.05))"
+delimitedSemiColonEnvelopeGeometry =3D """0;FALSE;Zero;3.488872444;0.438408=
+905;{"xmin":-121.461953630263,"ymin":38.6654842756241,"xmax":-120.011039685=
+427,"ymax":39.4787725848045, "spatialReference": { "wkid": 4269}} """
+
+XML =3D"""
+&lt;features&gt;
+  &lt;feature&gt;
+    &lt;stringField&gt;This is XML&lt;/stringField&gt;
+    &lt;int32Field&gt;5&lt;/int32Field&gt;
+    &lt;int64Field&gt;5555555&lt;/int64Field&gt;
+    &lt;float32Field&gt;-117.18&lt;/float32Field&gt;
+    &lt;float64Field&gt;34.055564&lt;/float64Field&gt;
+    &lt;dateField&gt;1752779083&lt;/dateField&gt;
+    &lt;booleanField&gt;true&lt;/booleanField&gt;
+  &lt;/feature&gt;
+&lt;/features&gt;
+"""
+
+XML_objectFlattening=3D"""
+&lt;customers&gt;
+   &lt;customer id=3D"55000"&gt;
+      &lt;start_time&gt;01/01/2015 16:40:20&lt;/start_time&gt;
+      &lt;end_time&gt;09/09/2025 18:40:20&lt;/end_time&gt;
+      &lt;name&gt;Charter Group&lt;/name&gt;
+      &lt;address&gt;
+         &lt;street&gt;100 Main&lt;/street&gt;
+         &lt;city&gt;Framingham&lt;/city&gt;
+         &lt;state&gt;MA&lt;/state&gt;
+         &lt;zip&gt;01701&lt;/zip&gt;
+      &lt;/address&gt;
+   &lt;/customer&gt;
+&lt;/customers&gt;
+"""
+
+XML_arrayFlattening=3D"""
+&lt;flight&gt;
+    &lt;aircraftData&gt;
+=09&lt;aircraftID&gt;N-X-211&lt;/aircraftID&gt;
+=09&lt;pilot&gt;Charles L.&lt;/pilot&gt;
+=09&lt;speed&gt;212.28&lt;/speed&gt;
+=09&lt;altitude&gt;20200&lt;/altitude&gt;
+=09&lt;heading&gt;44.02&lt;/heading&gt;
+=09&lt;latitude&gt;52.653726&lt;/latitude&gt;
+=09&lt;longitude&gt;-21.885421&lt;/longitude&gt;
+=09&lt;status&gt;In flight&lt;/status&gt;
+=09&lt;datetime&gt;1589962024&lt;/datetime&gt;
+=09&lt;tags&gt;
+=09    &lt;tag n=3D"0"&gt;boeing&lt;/tag&gt;
+=09    &lt;tag n=3D"1"&gt;vtol&lt;/tag&gt;
+=09    &lt;tag n=3D"2"&gt;glider&lt;/tag&gt;
+=09&lt;/tags&gt;
+=09&lt;setting&gt;
+=09    &lt;value&gt;3&lt;/value&gt;
+=09    &lt;value&gt;2&lt;/value&gt;
+=09    &lt;value&gt;1&lt;/value&gt;
+=09&lt;/setting&gt;
+    &lt;/aircraftData&gt;
+&lt;/flight&gt;
+"""
+
+geoJSON =3D"""{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "stringField": "This is geoJSON",
+        "int32Field": 5,
+        "int64Field": 5555555,
+        "float32Field": -117.18,
+        "float64Field": 34.055564,
+        "dateField": 1752779083,
+        "booleanField": true
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-117.18,34.055564],
+        "crs": {
+          "type": "name",
+          "properties": {
+            "name": "EPSG:4326"
+          }
+        }
+      }
+    }
+  ]
+}
+"""
+
+JSON =3D"""{
+"stringField": "This is JSON",
+"int32Field": 5,
+"int64Field": 5555555,
+"float32Field": -117.18,
+"float64Field": 34.055564,
+"dateField": 1752779083,
+"booleanField": true
+}
+"""
+
+JSON_objectFlattening=3D"""[{
+  "vehicleID": "17256",
+  "driverName": "Peter Jones",
+  "position": {
+    "latitude": 35.21027,
+    "longitude": -81.291326
+  },
+  "vehicleInformation": {
+    "lastService": 1571431836,
+    "warningCodes": 2
+  },
+  "speed": 64.3
+}]"""
+
+JSON_arrayFlattening=3D"""{
+    "name": "iss",
+    "id": 25544,
+    "latitude": -13.210305423781,
+    "longitude": -118.47517068897,
+    "velocity": 27564.442053654,
+    "visibility": "daylight",
+    "cargoInformation": [{
+            "sensorsID": 1,
+            "age": 5432
+        }, {
+            "sensorsID": 2,
+            "age": 9876
+        }
+    ],
+    "sensorValues": [1,2,3,4,5],
+    "footprint": 4521.609615023,
+    "timestamp": 1654531549,
+    "daynum": 2459737.170706,
+    "solar_lat": 22.696540649846,
+    "solar_lon": 298.23268983658,
+    "units": "kilometers"
+}"""
+
+JSON_rootNode_retainHigherElement=3D"""[{
+  "CurrentConditions": {
+    "CurrentTime": 1747433679,
+    "TempF":  "43.0",
+    "TempC":  "6.0",
+    "WindKph":  3,
+    "WindMph":  2,
+    "WindGustsMph":  7,
+    "WindGustsKph":  11
+  },
+  "SensorName": "Oak Park"
+}]"""
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.bind((HOST, PORT))
+    s.listen()
+    print(f"Server listening on {HOST}:{PORT}")
+    #message =3D esriJSON.encode('utf-8')
+    #message =3D XML.encode('utf-8')
+    #message =3D XML_objectFlattening.encode('utf-8')
+    #message =3D XML_arrayFlattening.encode('utf-8')
+    #message =3D JSON.encode('utf-8')
+    #message =3D JSON_objectFlattening.encode('utf-8')
+    #message =3D JSON_arrayFlattening.encode('utf-8')
+    message =3D JSON_rootNode_retainHigherElement.encode('utf-8')
+    #message =3D geoJSON.encode('utf-8')
+    #message =3D delimitedComma
+    #message =3D delimitedPipe
+    #message =3D delimitedSemiColon
+    #message =3D delimitedTab
+    #message =3D delimitedSemiColonEnvelopeGeometry
+
+
+    while True:
+        print("Waiting for a client to connect...")
+        conn, addr =3D s.accept()  # Accept a new connection
+        with conn:
+            print(f"Connected by {addr}")
+            while True:
+                try:
+                    if message in (delimitedComma, delimitedPipe, delimited=
+SemiColon, delimitedTab, delimitedSemiColonEnvelopeGeometry):
+                        conn.sendall(message.encode('utf-8') + RECORD_TERMI=
+NATOR)
+                    else:
+                        conn.sendall(message)
+                    print(message)
+                    time.sleep(INTERVAL_SECONDS)
+                except (BrokenPipeError, ConnectionResetError, ConnectionAb=
+ortedError):
+                    # ConnectionResetError is Linux, ConnectionAbortedError=
+ is Windows
+                    print("Client disconnected.")
+                    break       </pre>
+</div>
+</div>
+<p><strong>SocketTest</strong></p>
+<p>The following steps could be done on the same machine that Velocity is i=
+nstalled on or a different machine that is on the same network (i.e. the ma=
+chine that Enterprise is installed on)<br>
+ NOTE- to get SocketTest to work with the TCP Client Feed, you will have to=
+ first start running SocketTest, start the feed in Velocity and wait for te=
+stConnection.&nbsp; You will have to start listening again and send a sampl=
+e message with the data that you want to send.&nbsp; This will satisfy samp=
+leMessages.&nbsp; We have to do this because Velocity terminates the connec=
+tion with the TCP Server between testConnection and sampleMessages.&nbsp; S=
+ocketTest is not designed to handle the terminated connection.</p>
+<p>The following steps could be done on the same machine that Velocity is i=
+nstalled on or a different machine that is on the same network (i.e. the ma=
+chine that Enterprise is installed on)</p>
+<ol>
+<li>Download open JDK from&nbsp;<a class=3D"external-link" href=3D"https://=
+jdk.java.net/24/" rel=3D"nofollow">here&nbsp;</a></li>
+<li>Extract Open JDK and make note of the file path</li>
+<li>Download the zip file for SocketTest from&nbsp;<a class=3D"external-lin=
+k" href=3D"https://esriis-my.sharepoint.com/:u:/g/personal/joa10132_esri_co=
+m/EVlrGQmQHQRJju-JvM3PCQ8BSL-bps7ZkFOccxaB4VLmvg?e=3DBiWoV3" rel=3D"nofollo=
+w">here</a></li>
+<li>Unzip the file and edit the file called&nbsp; SocketTest.bat in Notepad=
+ or similar application</li>
+<li>To the .bat file, ADD 2 lines to the beginning.&nbsp; Your final .bat f=
+ile will have 7 lines total:=20
+<ol>
+<li><code>@set JAVA_HOME=3D"C:\Users\joa10132\Downloads\jdk-24.0.1"</code>&=
+nbsp; where you replace the file directory with the location that you unzip=
+ped Open JDK.</li>
+<li><code>@set Path=3D"C:\Users\joa10132\Downloads\jdk-24.0.1\bin";%Path%</=
+code>&nbsp; where you replace the file directory with the location of the b=
+in directory</li>
+</ol></li>
+<li>Run SocketTest app using your the updating configuration from the .bat =
+file.&nbsp; To do this, use the command line to:=20
+<ol>
+<li>cd to the location of the SocketTest application</li>
+<li>Run<span>&nbsp;</span><code>.\SocketTest.bat</code>&nbsp; &nbsp;This wi=
+ll run SocketTest app using the customized .bat file</li>
+</ol></li>
+<li>To use SocketTest to test the TCP Client Feed:&nbsp;=20
+<ol>
+<li>In Velocity, create the TCP feed using 127.0.0.1 as the address and 500=
+5 as the port.&nbsp; Select 'Next', and notice that SocketTest will receive=
+ the request</li>
+<li>Start listening in SocketTest and send a sample message with the schema=
+ of the data.</li>
+<li>Velocity will use the message to derive the schema</li>
+<li>Start the feed and use SocketTest to manually send messages</li>
+</ol></li>
+</ol>
+<h2 id=3D"TCPClient(Enterpriseonly)-Requirements">Requirements</h2>
+<p><br></p>
+<div class=3D"panel" style=3D"background-color: WhiteSmoke;border-color: bl=
+ack;border-style: solid;border-width: 2px;">
+<div class=3D"panelHeader" style=3D"border-bottom-width: 2px;border-bottom-=
+style: solid;border-bottom-color: black;background-color: white;color: blac=
+k;"><b>Git Markdown for Devtopia issue test task</b>
+</div>
+<div class=3D"panelContent" style=3D"background-color: WhiteSmoke;">
+<p>[Confluence wiki page can be found here](<a href=3D"https://confluencewi=
+kidev.esri.com/pages/viewpage.action?pageId=3D452624823" rel=3D"nofollow">T=
+CP Client Feed</a>)<br>
+ ***<br>
+ - **Properties** &nbsp;<br>
+ &nbsp; - [x] host &nbsp;<br>
+ &nbsp; - [x] port &nbsp;<br>
+ - **Schema and data configurations support** &nbsp;<br>
+ - **Field types** &nbsp;<br>
+ &nbsp; - [x] String &nbsp;<br>
+ &nbsp; - [x] Date &nbsp;<br>
+ &nbsp; - [x] Int32 &nbsp;<br>
+ &nbsp; - [x] Int64 &nbsp;<br>
+ &nbsp; - [x] Float32 &nbsp;<br>
+ &nbsp; - [x] Float64 &nbsp;<br>
+ &nbsp; - [x] Boolean &nbsp;<br>
+ - **Date and time** &nbsp;<br>
+ &nbsp; - [x] Date format &nbsp;<br>
+ &nbsp; &nbsp; - [x] No Date &nbsp;<br>
+ &nbsp; &nbsp; - [x] Epoch milliseconds &nbsp;<br>
+ &nbsp; &nbsp; - [x] Epoch seconds &nbsp;<br>
+ &nbsp; &nbsp; - [x] Other (string) &nbsp;<br>
+ &nbsp; - [x] Start time &nbsp;<br>
+ &nbsp; - [x] End time &nbsp;<br>
+ - **Location types** &nbsp;<br>
+ &nbsp; - [x] Geometry type: Point &nbsp;<br>
+ &nbsp; - [x] Geometry type: Line &nbsp;<br>
+ &nbsp; - [x] Geometry type: Polygon &nbsp;<br>
+ &nbsp; - [x] Geometry type: Multipoint &nbsp;<br>
+ &nbsp; - [x] Geometry type: Envelope &nbsp;<br>
+ &nbsp; - [x] Geometry type: None &nbsp;<br>
+ &nbsp; - [x] Single geometry field: Coordinates &nbsp;<br>
+ &nbsp; - [x] Single geometry field: Geometry from EsriJSON &nbsp;<br>
+ &nbsp; - [x] Single geometry field: Geometry from GeoJSON &nbsp;<br>
+ &nbsp; - [x] Single geometry field: Geometry from WKT &nbsp;<br>
+ &nbsp; - [x] X/Y field: Point from lat long &nbsp;<br>
+ &nbsp; - [x] Z values &nbsp;<br>
+ &nbsp; - [x] Spatial reference &nbsp;<br>
+ - **Tracking** &nbsp;<br>
+ &nbsp; - [x] No track ID &nbsp;<br>
+ &nbsp; - [x] Track ID &nbsp;<br>
+ - **Time types** &nbsp;<br>
+ &nbsp; - [x] No time &nbsp;<br>
+ &nbsp; - [x] Instant time (start_time only) &nbsp;<br>
+ &nbsp; - [x] Interval time (start_time, end_time) &nbsp;<br>
+ - **Data formats supported** &nbsp;<br>
+ &nbsp; - Delimited &nbsp;<br>
+ &nbsp; &nbsp; - [x] Comma &nbsp;<br>
+ &nbsp; &nbsp; - [x] Semi-colon &nbsp;<br>
+ &nbsp; &nbsp; - [x] Pipe &nbsp;<br>
+ &nbsp; &nbsp; - [x] Tab &nbsp;<br>
+ &nbsp; - [x] EsriJSON &nbsp;<br>
+ &nbsp; - [x] GeoJSON &nbsp;<br>
+ &nbsp; - [x] XML &nbsp;<br>
+ &nbsp; &nbsp; - [x] Root node &nbsp;<br>
+ &nbsp; &nbsp; - [x] Object Flattening &nbsp;<br>
+ &nbsp; &nbsp; - [x] Object Flattening exemptions &nbsp;<br>
+ &nbsp; &nbsp; - [ ] Array flattening&nbsp; (waiting on pbi to be fixed)<br=
+>
+ &nbsp; &nbsp; - [ ] Array flattening exemptions&nbsp; (waiting on pbi to b=
+e fixed)<br>
+ &nbsp; - [x] JSON &nbsp;<br>
+ &nbsp; &nbsp; - [x] Root node &nbsp;<br>
+ &nbsp; &nbsp; - [x] Flattening &nbsp;<br>
+ &nbsp; &nbsp; - [x] Flattening exemptions &nbsp;<br>
+ &nbsp; &nbsp; - [x] Array flattening &nbsp;<br>
+ &nbsp; &nbsp; - [x] Array flattening exemptions &nbsp;<br>
+ &nbsp; &nbsp; - [x] Retain Higher Element<br><br><br></p>
+</div>
+</div>
+<h2 id=3D"TCPClient(Enterpriseonly)-TestCases">Test Cases</h2>
+<p><br></p>
+<div class=3D"table-wrap">
+<table class=3D"wrapped relative-table confluenceTable" data-snooker-col-se=
+ries=3D"numbers" data-snooker-locked-cols=3D"0" style=3D"width: 116.0%;">
+<colgroup>
+<col style=3D"width: 1.70153%;">
+<col style=3D"width: 16.07%;">
+<col style=3D"width: 12.8087%;">
+<col style=3D"width: 16.3536%;">
+<col style=3D"width: 15.8809%;">
+<col style=3D"width: 18.1496%;">
+</colgroup>
+<tbody>
+<tr>
+<th class=3D"numberingColumn confluenceTh" contenteditable=3D"false" data-m=
+ce-resize=3D"false">#</th>
+<th class=3D"confluenceTh">Title</th>
+<th class=3D"confluenceTh">Pre-requisites</th>
+<th class=3D"confluenceTh">What does this test do?</th>
+<th class=3D"confluenceTh">Notes</th>
+<th class=3D"confluenceTh"><p>Test Case(s) <sup>!</sup></p><p>(link to <a c=
+lass=3D"external-link" href=3D"https://esri.testrail.com/index.php?/dashboa=
+rd" rel=3D"nofollow">Test Rail</a>)</p></th>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">1</td>
+<td class=3D"confluenceTd">feed_tcpClient_release</td>
+<td class=3D"confluenceTd"><p><br></p></td>
+<td class=3D"confluenceTd"><p>This is a manual release test</p>
+<ul style=3D"list-style-type: square;">
+<li>hostname vs ip</li>
+<li>incorrect port number</li>
+<li>error messages</li>
+<li>end to end creation of the feed</li>
+</ul></td>
+<td class=3D"confluenceTd">This test case is completed.&nbsp; It is a manua=
+l test and will not be automated.</td>
+<td class=3D"confluenceTd">M: <a class=3D"external-link" href=3D"https://es=
+ri.testrail.com/index.php?/cases/view/1602065" rel=3D"nofollow">https://esr=
+i.testrail.com/index.php?/cases/view/1602065</a></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">2</td>
+<td class=3D"confluenceTd">feed_tcpClient_apiCalls</td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd">
+<ul style=3D"text-align: left;">
+<li>POST to /iot/feed</li>
+<li>GET to /iot/feed/{id}/start to start the feed</li>
+<li>GET to /iot/feed/{id}/status to get the status of the feed</li>
+<li>GET to /iot/feed/{id}/stop to stop the feed</li>
+<li>PUT to /iot/feed{id} to update the feed</li>
+<li>GET to /iot/feed/{id} to get the feed</li>
+<li>DELETE to /iot/feed/{id} to delete the feed</li>
+</ul></td>
+<td class=3D"confluenceTd">This test case is complete and is in the automat=
+ion queue</td>
+<td class=3D"confluenceTd">M: <a class=3D"external-link" href=3D"https://es=
+ri.testrail.com/index.php?/cases/view/1602073" rel=3D"nofollow">https://esr=
+i.testrail.com/index.php?/cases/view/1602073</a></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">3</td>
+<td class=3D"confluenceTd">feed_tcpClient_metrics</td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd">
+<ul style=3D"text-align: left;">
+<li>/iot/feed/metrics/{id}</li>
+<li>/iot/feed/metrics/{id}/history</li>
+</ul></td>
+<td class=3D"confluenceTd">This test case is complete and is in the automat=
+ion queue</td>
+<td class=3D"confluenceTd">M:&nbsp;<a class=3D"external-link" href=3D"https=
+://esri.testrail.com/index.php?/cases/view/1602074" rel=3D"nofollow">https:=
+//esri.testrail.com/index.php?/cases/view/1602074</a></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">4</td>
+<td class=3D"confluenceTd">feed_tcpClient_testConnection_sampleMessages</td=
+>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd">
+<ul>
+<li>testConnection</li>
+<li>sampleMessages</li>
+</ul></td>
+<td class=3D"confluenceTd">This test case is complete and is in the automat=
+ion queue</td>
+<td class=3D"confluenceTd"><p>M:<a class=3D"external-link" href=3D"https://=
+esri.testrail.com/index.php?/cases/view/1602075" rel=3D"nofollow">&nbsp;htt=
+ps://esri.testrail.com/index.php?/cases/view/1602075</a></p></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">5</td>
+<td class=3D"confluenceTd">feed_tcpClient_esriJSON</td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd">
+<ul>
+<li>esriJSON data format</li>
+<li>Point Geometry</li>
+<li>Single geometry field: geometry from Esri JSON</li>
+<li>Date field: no</li>
+<li>Track ID: stringField</li>
+</ul></td>
+<td class=3D"confluenceTd">This test case is complete and is in the automat=
+ion queue</td>
+<td class=3D"confluenceTd"><p>M: <a class=3D"external-link" href=3D"https:/=
+/esri.testrail.com/index.php?/cases/view/1602076" rel=3D"nofollow">https://=
+esri.testrail.com/index.php?/cases/view/1602076</a></p></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">6</td>
+<td class=3D"confluenceTd">feed_tcpClient_geoJSON</td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd">
+<ul style=3D"list-style-type: square;">
+<li>geoJSON data format</li>
+<li>Point Geometry</li>
+<li>Single geometry field: geometry from GeoJSON</li>
+<li>Date field: yes <code>dateField</code>&nbsp;</li>
+<li>Track ID: none</li>
+</ul></td>
+<td style=3D"text-align: left;vertical-align: top;" class=3D"confluenceTd">=
+This test case is complete and is in the automation queue</td>
+<td style=3D"text-align: left;vertical-align: top;" class=3D"confluenceTd">=
+M:<a class=3D"external-link" href=3D"https://esri.testrail.com/index.php?/c=
+ases/view/1602077" rel=3D"nofollow">&nbsp;https://esri.testrail.com/index.p=
+hp?/cases/view/1602077</a></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">7</td>
+<td class=3D"confluenceTd">feed_tcpClient_JSON</td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd">
+<ul style=3D"list-style-type: square;">
+<li>JSON data format</li>
+<li>No geometry</li>
+<li>Track ID: none</li>
+<li>Date field: none</li>
+</ul></td>
+<td class=3D"confluenceTd">This test case is complete and is in the automat=
+ion queue</td>
+<td class=3D"confluenceTd">M:<a class=3D"external-link" href=3D"https://esr=
+i.testrail.com/index.php?/cases/view/1602078" rel=3D"nofollow">&nbsp;https:=
+//esri.testrail.com/index.php?/cases/view/1602078</a></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">8</td>
+<td class=3D"confluenceTd">feed_tcpClient_XML</td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd">
+<ul style=3D"list-style-type: square;">
+<li>XML data format</li>
+<li>Geometry from X/Y fields</li>
+<li>Z values</li>
+<li>XML with root node set</li>
+</ul></td>
+<td class=3D"confluenceTd">This test case is complete and is in the automat=
+ion queue</td>
+<td class=3D"confluenceTd">M:<a class=3D"external-link" href=3D"https://esr=
+i.testrail.com/index.php?/cases/view/1602079" rel=3D"nofollow">&nbsp;https:=
+//esri.testrail.com/index.php?/cases/view/1602079</a></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">9</td>
+<td class=3D"confluenceTd">feed_tcpClient_delimitedComma</td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd">
+<ul style=3D"list-style-type: square;">
+<li>Delimited comma format</li>
+<li>Line geometry</li>
+<li>Geometry generated from WKT</li>
+</ul></td>
+<td class=3D"confluenceTd"><p>This test case is complete and is in the auto=
+mation queue</p></td>
+<td class=3D"confluenceTd">M:<a class=3D"external-link" href=3D"https://esr=
+i.testrail.com/index.php?/cases/view/1602080" rel=3D"nofollow">&nbsp;https:=
+//esri.testrail.com/index.php?/cases/view/1602080</a></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">10</td>
+<td class=3D"confluenceTd">feed_tcpClient_delimitedPipe</td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd">
+<ul style=3D"list-style-type: square;">
+<li>Delimited Pipe format</li>
+<li>Point geometry</li>
+<li>Geometry generated from lat, long</li>
+<li>Date field in epoch ms format</li>
+</ul></td>
+<td class=3D"confluenceTd"><p>This test case is complete and is in the auto=
+mation queue</p></td>
+<td class=3D"confluenceTd">M:<a class=3D"external-link" href=3D"https://esr=
+i.testrail.com/index.php?/cases/view/1602081" rel=3D"nofollow">&nbsp;https:=
+//esri.testrail.com/index.php?/cases/view/1602081</a></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">11</td>
+<td class=3D"confluenceTd">feed_tcpClient_delimitedSemiColon</td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd">
+<ul style=3D"list-style-type: square;">
+<li>Delimited semi colon format</li>
+<li>Polygon geometry</li>
+<li>Geometry generated from WKT</li>
+</ul></td>
+<td class=3D"confluenceTd"><p>This test case is complete and is in the auto=
+mation queue</p></td>
+<td class=3D"confluenceTd">M:<a class=3D"external-link" href=3D"https://esr=
+i.testrail.com/index.php?/cases/view/1602082" rel=3D"nofollow">&nbsp;https:=
+//esri.testrail.com/index.php?/cases/view/1602082</a></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">12</td>
+<td class=3D"confluenceTd">feed_tcpClient_delimitedTab</td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd">
+<ul style=3D"list-style-type: square;">
+<li>Delimited tab data format</li>
+<li>Multipoint geometry</li>
+<li>Geometry generated from WKT</li>
+</ul></td>
+<td class=3D"confluenceTd"><p>This test case is complete and is in the auto=
+mation queue</p></td>
+<td class=3D"confluenceTd">M:<a class=3D"external-link" href=3D"https://esr=
+i.testrail.com/index.php?/cases/view/1602083" rel=3D"nofollow">&nbsp;https:=
+//esri.testrail.com/index.php?/cases/view/1602083</a></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">13</td>
+<td class=3D"confluenceTd">feed_tcpClient_delimitedSemiColon_envelope</td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd">
+<ul style=3D"list-style-type: square;">
+<li>Delimited semi colong data format</li>
+<li>Envelope geometry</li>
+<li>Geometry generated from WKT</li>
+</ul></td>
+<td class=3D"confluenceTd">This test case is complete and is in the automat=
+ion queue</td>
+<td class=3D"confluenceTd">M:<a class=3D"external-link" href=3D"https://esr=
+i.testrail.com/index.php?/cases/view/1617062" rel=3D"nofollow">&nbsp;https:=
+//esri.testrail.com/index.php?/cases/view/1617062</a></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">14</td>
+<td class=3D"confluenceTd">feed_tcpClient_xmlObjectFlattening</td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd">
+<ul style=3D"list-style-type: square;">
+<li>XML with flattening and flattening exemption</li>
+<li>Start date as string</li>
+<li>End date as string</li>
+<li>No geometry</li>
+</ul></td>
+<td class=3D"confluenceTd"><p>This test case is complete and is in the auto=
+mation queue</p></td>
+<td class=3D"confluenceTd">M:<a class=3D"external-link" href=3D"https://esr=
+i.testrail.com/index.php?/cases/view/1617063" rel=3D"nofollow">&nbsp;https:=
+//esri.testrail.com/index.php?/cases/view/1617063</a></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">15</td>
+<td class=3D"confluenceTd">feed_tcpClient_xmlArrayFlattening</td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd">
+<ul style=3D"list-style-type: square;">
+<li>XML with array flattening and array flattening exemption</li>
+<li>No geometry</li>
+</ul></td>
+<td class=3D"confluenceTd"><p><strong>TO DO</strong> Blocked- Joanna can fi=
+nish this test case once this PBI is fixed</p><p><a class=3D"external-link"=
+ href=3D"https://devtopia.esri.com/WebGIS/arcgis-velocity-online/issues/179=
+82" rel=3D"nofollow">https://devtopia.esri.com/WebGIS/arcgis-velocity-onlin=
+e/issues/17982</a></p></td>
+<td class=3D"confluenceTd"><a class=3D"external-link" href=3D"https://esri.=
+testrail.com/index.php?/cases/view/1617066" rel=3D"nofollow">https://esri.t=
+estrail.com/index.php?/cases/view/1617066</a></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">16</td>
+<td class=3D"confluenceTd">feed_tcpClient_jsonObjectFlattening</td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd">
+<ul style=3D"list-style-type: square;">
+<li>JSON with flattening and flattening exemption</li>
+<li>No geometry</li>
+</ul></td>
+<td class=3D"confluenceTd">This test case is complete and is in the automat=
+ion queue</td>
+<td class=3D"confluenceTd">M:<a class=3D"external-link" href=3D"https://esr=
+i.testrail.com/index.php?/cases/view/1617064" rel=3D"nofollow">&nbsp;https:=
+//esri.testrail.com/index.php?/cases/view/1617064</a></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">17</td>
+<td class=3D"confluenceTd">feed_tcpClient_jsonArrayFlattening</td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd">
+<ul style=3D"list-style-type: square;">
+<li>JSON with array flattening and array flattening exemption</li>
+<li>No geometry</li>
+</ul></td>
+<td class=3D"confluenceTd"><p>This test case is complete and is in the auto=
+mation queue</p></td>
+<td class=3D"confluenceTd">M:<a class=3D"external-link" href=3D"https://esr=
+i.testrail.com/index.php?/cases/view/1617067" rel=3D"nofollow">&nbsp;https:=
+//esri.testrail.com/index.php?/cases/view/1617067</a></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">18</td>
+<td class=3D"confluenceTd"><span class=3D"title">feed_tcpClient_jsonRootNod=
+e_retainHigherElement&nbsp;</span></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd">
+<ul>
+<li>JSON with root node and 'retain higher element'</li>
+<li>No geometry</li>
+</ul></td>
+<td class=3D"confluenceTd"><p>This test case is complete and is in the auto=
+mation queue</p></td>
+<td class=3D"confluenceTd">M:<a class=3D"external-link" href=3D"https://esr=
+i.testrail.com/index.php?/cases/view/1617065" rel=3D"nofollow">&nbsp;https:=
+//esri.testrail.com/index.php?/cases/view/1617065</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><br></p>
+<p><br></p>
+<p><br></p>
+    </div>
+</body>
+</html>
+------=_Part_5906_772712730.1775151759139--

@@ -1,0 +1,633 @@
+Date: Thu, 2 Apr 2026 10:42:28 -0700 (PDT)
+Message-ID: <2040403922.5905.1775151748774@red-app-dev-p01.esri.com>
+Subject: Exported From Confluence
+MIME-Version: 1.0
+Content-Type: multipart/related; 
+	boundary="----=_Part_5904_1655257080.1775151748774"
+
+------=_Part_5904_1655257080.1775151748774
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Content-Location: file:///C:/exported.html
+
+<html xmlns:o=3D'urn:schemas-microsoft-com:office:office'
+      xmlns:w=3D'urn:schemas-microsoft-com:office:word'
+      xmlns:v=3D'urn:schemas-microsoft-com:vml'
+      xmlns=3D'urn:w3-org-ns:HTML'>
+<head>
+    <meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dutf-8=
+">
+    <title>RAT Output TCP Client ( Enterprise Only)</title>
+    <!--[if gte mso 9]>
+    <xml>
+        <o:OfficeDocumentSettings>
+            <o:TargetScreenSize>1024x640</o:TargetScreenSize>
+            <o:PixelsPerInch>72</o:PixelsPerInch>
+            <o:AllowPNG/>
+        </o:OfficeDocumentSettings>
+        <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>90</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+        </w:WordDocument>
+    </xml>
+    <![endif]-->
+    <style>
+                <!--
+        @page Section1 {
+            size: 8.5in 11.0in;
+            margin: 1.0in;
+            mso-header-margin: .5in;
+            mso-footer-margin: .5in;
+            mso-paper-source: 0;
+        }
+
+        table {
+            border: solid 1px;
+            border-collapse: collapse;
+        }
+
+        table td, table th {
+            border: solid 1px;
+            padding: 5px;
+        }
+
+        td {
+            page-break-inside: avoid;
+        }
+
+        tr {
+            page-break-after: avoid;
+        }
+
+        div.Section1 {
+            page: Section1;
+        }
+
+        /* Confluence print stylesheet. Common to all themes for print medi=
+a */
+/* Full of !important until we improve batching for print CSS */
+
+@media print {
+    #main {
+        padding-bottom: 1em !important; /* The default padding of 6em is to=
+o much for printouts */
+    }
+
+    body {
+        font-family: Arial, Helvetica, FreeSans, sans-serif;
+        font-size: 10pt;
+        line-height: 1.2;
+    }
+
+    body, #full-height-container, #main, #page, #content, .has-personal-sid=
+ebar #content {
+        background: #fff !important;
+        color: #000 !important;
+        border: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+
+    a, a:link, a:visited, a:focus, a:hover, a:active {
+        color: #000;
+    }
+
+    #content h1,
+    #content h2,
+    #content h3,
+    #content h4,
+    #content h5,
+    #content h6 {
+        font-family: Arial, Helvetica, FreeSans, sans-serif;
+        page-break-after: avoid;
+    }
+
+    pre {
+        font-family: Monaco, "Courier New", monospace;
+    }
+
+    #header,
+    .aui-header-inner,
+    #navigation,
+    #sidebar,
+    .sidebar,
+    #personal-info-sidebar,
+    .ia-fixed-sidebar,
+    .page-actions,
+    .navmenu,
+    .ajs-menu-bar,
+    .noprint,
+    .inline-control-link,
+    .inline-control-link a,
+    a.show-labels-editor,
+    .global-comment-actions,
+    .comment-actions,
+    .quick-comment-container,
+    #addcomment {
+        display: none !important;
+    }
+
+    /* CONF-28544 cannot print multiple pages in IE */
+    #splitter-content {
+        position: relative !important;
+    }
+
+    .comment .date::before {
+        content: none !important; /* remove middot for print view */
+    }
+
+    h1.pagetitle img {
+        height: auto;
+        width: auto;
+    }
+
+    .print-only {
+        display: block;
+    }
+
+    #footer {
+        position: relative !important; /* CONF-17506 Place the footer at en=
+d of the content */
+        margin: 0;
+        padding: 0;
+        background: none;
+        clear: both;
+    }
+
+    #poweredby {
+        border-top: none;
+        background: none;
+    }
+
+    #poweredby li.print-only {
+        display: list-item;
+        font-style: italic;
+    }
+
+    #poweredby li.noprint {
+        display: none;
+    }
+
+    /* no width controls in print */
+    .wiki-content .table-wrap,
+    .wiki-content p,
+    .panel .codeContent,
+    .panel .codeContent pre,
+    .image-wrap {
+        overflow: visible !important;
+    }
+
+    /* TODO - should this work? */
+    #children-section,
+    #comments-section .comment,
+    #comments-section .comment .comment-body,
+    #comments-section .comment .comment-content,
+    #comments-section .comment p {
+        page-break-inside: avoid;
+    }
+
+    #page-children a {
+        text-decoration: none;
+    }
+
+    /**
+     hide twixies
+
+     the specificity here is a hack because print styles
+     are getting loaded before the base styles. */
+    #comments-section.pageSection .section-header,
+    #comments-section.pageSection .section-title,
+    #children-section.pageSection .section-header,
+    #children-section.pageSection .section-title,
+    .children-show-hide {
+        padding-left: 0;
+        margin-left: 0;
+    }
+
+    .children-show-hide.icon {
+        display: none;
+    }
+
+    /* personal sidebar */
+    .has-personal-sidebar #content {
+        margin-right: 0px;
+    }
+
+    .has-personal-sidebar #content .pageSection {
+        margin-right: 0px;
+    }
+
+    .no-print, .no-print * {
+        display: none !important;
+    }
+}
+-->
+    </style>
+</head>
+<body>
+    <h1>RAT Output TCP Client ( Enterprise Only)</h1>
+    <div class=3D"Section1">
+        <p><style type=3D"text/css">/*<![CDATA[*/
+div.rbtoc1775151748704 {padding: 0px;}
+div.rbtoc1775151748704 ul {margin-left: 0px;}
+div.rbtoc1775151748704 li {margin-left: 0px;padding-left: 0px;}
+
+/*]]>*/</style></p>
+<div class=3D"toc-macro rbtoc1775151748704">
+<ul class=3D"toc-indentation">
+<li><a href=3D"#RATOutputTCPClient(EnterpriseOnly)-Goals">Goals</a>
+<ul class=3D"toc-indentation">
+<li><a href=3D"#RATOutputTCPClient(EnterpriseOnly)-Backgroundandstrategicfi=
+t">Background and strategic fit</a></li>
+<li><a href=3D"#RATOutputTCPClient(EnterpriseOnly)-Assumptions">Assumptions=
+</a></li>
+<li><a href=3D"#RATOutputTCPClient(EnterpriseOnly)-Questions">Questions</a>=
+</li>
+<li><a href=3D"#RATOutputTCPClient(EnterpriseOnly)-TestingResources">Testin=
+g Resources</a>
+<ul class=3D"toc-indentation">
+<li><a href=3D"#RATOutputTCPClient(EnterpriseOnly)-PythonMethod">Python Met=
+hod</a></li>
+</ul></li>
+</ul></li>
+<li><a href=3D"#RATOutputTCPClient(EnterpriseOnly)-Requirements">Requiremen=
+ts</a>
+<ul class=3D"toc-indentation">
+<li><a href=3D"#RATOutputTCPClient(EnterpriseOnly)-MainRequirements">Main R=
+equirements</a></li>
+<li><a href=3D"#RATOutputTCPClient(EnterpriseOnly)-ChildrenRequirements">Ch=
+ildren Requirements</a></li>
+</ul></li>
+<li><a href=3D"#RATOutputTCPClient(EnterpriseOnly)-TestRail">Test Rail</a>
+<ul class=3D"toc-indentation">
+<li><a href=3D"#RATOutputTCPClient(EnterpriseOnly)-TestCases">Test Cases</a=
+></li>
+<li><a href=3D"#RATOutputTCPClient(EnterpriseOnly)-ManualTestRuns">Manual T=
+est Runs</a></li>
+</ul></li>
+<li><a href=3D"#RATOutputTCPClient(EnterpriseOnly)-Tasks(LinkstoDevtopia)">=
+Tasks (Links to Devtopia)</a></li>
+<li><a href=3D"#RATOutputTCPClient(EnterpriseOnly)-Userinteractionanddesign=
+">User interaction and design</a></li>
+</ul>
+</div>
+<p></p>
+<h2 id=3D"RATOutputTCPClient(EnterpriseOnly)-Goals">Goals</h2>
+<h3 id=3D"RATOutputTCPClient(EnterpriseOnly)-Backgroundandstrategicfit">Bac=
+kground and strategic fit</h3>
+<ul>
+<li>TCP output is available in RATs only in Velocity on Enterprise.</li>
+</ul>
+<h3 id=3D"RATOutputTCPClient(EnterpriseOnly)-Assumptions">Assumptions</h3>
+<h3 id=3D"RATOutputTCPClient(EnterpriseOnly)-Questions">Questions</h3>
+<h3 id=3D"RATOutputTCPClient(EnterpriseOnly)-TestingResources">Testing Reso=
+urces</h3>
+<p>To test TCP output, you can run a python script like the one below and u=
+se the IP and port numbers as the parameters to the TCP output in a RAT.</p=
+>
+<h4 id=3D"RATOutputTCPClient(EnterpriseOnly)-PythonMethod">Python Method</h=
+4>
+<ul>
+<li>Pre-requisite: have Python installed on the machine</li>
+</ul>
+<div class=3D"code panel pdl" style=3D"border-width: 1px;">
+<div class=3D"codeHeader panelHeader pdl hide-border-bottom" style=3D"borde=
+r-bottom-width: 1px;">
+<b class=3D"code-title">Expand for Python Script</b><span class=3D"collapse=
+-source expand-control" style=3D"display:none;"><span class=3D"expand-contr=
+ol-icon icon">&nbsp;</span><span class=3D"expand-control-text">Expand sourc=
+e</span></span><span class=3D"collapse-spinner-wrapper"></span>
+</div>
+<div class=3D"codeContent panelContent pdl hide-toolbar">
+<pre class=3D"syntaxhighlighter-pre" data-syntaxhighlighter-params=3D"brush=
+: py; gutter: true; theme: Confluence; collapse: true" data-theme=3D"Conflu=
+ence">import socket
+
+HOST =3D '127.0.0.1'  # Localhost
+PORT =3D 5578         # Port to listen on
+
+server_socket =3D socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_socket.bind((HOST, PORT))
+server_socket.listen(1)
+
+print(f"Server listening on {HOST}:{PORT}...", flush=3DTrue)
+
+while True:
+    client_socket, addr =3D server_socket.accept()
+    print(f"Connection from {addr}", flush=3DTrue)
+
+    while True:
+        data =3D client_socket.recv(1024)
+        if not data:
+            print(f"Client {addr} disconnected.", flush=3DTrue)
+            break
+        print(f"Received: {data.decode(errors=3D'ignore')}", flush=3DTrue)
+
+    client_socket.close()</pre>
+</div>
+</div>
+<h2 id=3D"RATOutputTCPClient(EnterpriseOnly)-Requirements">Requirements</h2=
+>
+<h3 id=3D"RATOutputTCPClient(EnterpriseOnly)-MainRequirements">Main Require=
+ments</h3>
+<p>This list details the functional requirements that must be verified.&nbs=
+p; The list is maintained in <a class=3D"external-link" href=3D"https://doc=
+s.github.com/en/get-started/writing-on-github/getting-started-with-writing-=
+and-formatting-on-github/basic-writing-and-formatting-syntax" rel=3D"nofoll=
+ow">Git Markdown format</a> so that it can be easily copied into a Devtopia=
+ issue for assignment.</p>
+<div id=3D"expander-11230850" class=3D"expand-container">
+<div role=3D"heading" aria-level=3D"6" id=3D"expander-control-11230850" cla=
+ss=3D"expand-control"><button type=3D"button" id=3D"expand-button-11230850"=
+ class=3D"aui-button aui-button-link aui-button-link-icon-text" aria-expand=
+ed=3D"true" aria-controls=3D"expander-content-11230850"><span class=3D"expa=
+nd-icon aui-icon aui-icon-small aui-iconfont-chevron-down" aria-hidden=3D"t=
+rue"></span><span class=3D"expand-control-text conf-macro-render">Notes &am=
+p; Examples</span></button>
+</div>
+<div role=3D"region" id=3D"expander-content-11230850" class=3D"expand-conte=
+nt" aria-labelledby=3D"expand-button-11230850">
+<p><br></p>
+<div class=3D"code panel pdl" style=3D"border-width: 1px;">
+<div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
+;"><b>Example List of Requirements</b>
+</div>
+<div class=3D"codeContent panelContent pdl">
+<pre class=3D"syntaxhighlighter-pre" data-syntaxhighlighter-params=3D"brush=
+: text; gutter: true; theme: Midnight" data-theme=3D"Midnight">- [ ] testCo=
+nnection
+  - [ ]  Sub-requirement
+- **Bold Section Title** - Description of section
+  - Sub-requirement section title (not bold)
+    - [ ]  Sub-sub-requirement
+    - [ ]  Sub-sub-requirement
+- []  Requirement: Link to Test Rail Test Case M:[C521593](https://esri.tes=
+trail.com/index.php?/cases/view/521593)</pre>
+</div>
+</div>
+</div>
+</div>
+<div class=3D"panel" style=3D"background-color: WhiteSmoke;border-color: bl=
+ack;border-style: solid;border-width: 2px;">
+<div class=3D"panelHeader" style=3D"border-bottom-width: 2px;border-bottom-=
+style: solid;border-bottom-color: black;background-color: white;color: blac=
+k;"><b>Git Markdown for Devtopia issue test task</b>
+</div>
+<div class=3D"panelContent" style=3D"background-color: WhiteSmoke;">
+<p>[Confluence wiki page can be found here](<a href=3D"https://confluencewi=
+kidev.esri.com/display/RTQA/RAT+Output+UDP" rel=3D"nofollow">TCP Client Out=
+put</a>)<br>
+ ***</p>
+<p>Parameters &nbsp;<br>
+ - [ ] TCP-client.hostname &nbsp;<br>
+ - [ ] TCP-client.port &nbsp;<br>
+ - [ ] supportedFormat: delimited &nbsp;<br>
+ - [ ] supportedFormat: json &nbsp;<br>
+ - [ ] supportedFormat: esri-json &nbsp;<br>
+ - [ ] supportedFormat: geo-json<br>
+ - [ ] Delimited only: write header row<br>
+ - [ ] Delimited only: add delimiter</p>
+<p><br></p>
+</div>
+</div>
+<h3 id=3D"RATOutputTCPClient(EnterpriseOnly)-ChildrenRequirements">Children=
+ Requirements</h3>
+<p>To capture details on sub-requirements or permutations of this page. Be =
+sure to copy these requirements into any Devtopia issue created to do funct=
+ional verification.</p>
+<p></p>
+<div class=3D"plugin_pagetree">
+<ul role=3D"list" class=3D"plugin_pagetree_children_list plugin_pagetree_ch=
+ildren_list_noleftspace">
+<div class=3D"plugin_pagetree_children">
+</div>
+</ul>
+<fieldset class=3D"hidden">
+<input type=3D"hidden" name=3D"treeId" value=3D""> <input type=3D"hidden" n=
+ame=3D"treeRequestId" value=3D"/plugins/pagetree/naturalchildren.action?dec=
+orator=3Dnone&amp;excerpt=3Dfalse&amp;sort=3Dposition&amp;reverse=3Dfalse&a=
+mp;disableLinks=3Dfalse&amp;expandCurrent=3Dfalse&amp;placement=3D"> <input=
+ type=3D"hidden" name=3D"treePageId" value=3D"446957209"> <input type=3D"hi=
+dden" name=3D"noRoot" value=3D"false"> <input type=3D"hidden" name=3D"rootP=
+ageId" value=3D"446957209"> <input type=3D"hidden" name=3D"rootPage" value=
+=3D""> <input type=3D"hidden" name=3D"startDepth" value=3D"0"> <input type=
+=3D"hidden" name=3D"spaceKey" value=3D"RTQA"> <input type=3D"hidden" name=
+=3D"i18n-pagetree.loading" value=3D"Loading..."> <input type=3D"hidden" nam=
+e=3D"i18n-pagetree.error.permission" value=3D"Unable to load page tree. It =
+seems that you do not have permission to view the root page."> <input type=
+=3D"hidden" name=3D"i18n-pagetree.eeror.general" value=3D"There was a probl=
+em retrieving the page tree. Please check the server log file for more info=
+rmation."> <input type=3D"hidden" name=3D"loginUrl" value=3D"/login.action?=
+os_destination=3D%2Fexportword%3FpageId%3D446957209&amp;permissionViolation=
+=3Dtrue"> <input type=3D"hidden" name=3D"mobile" value=3D"false"> <input ty=
+pe=3D"hidden" name=3D"placement" value=3D"">
+<fieldset class=3D"hidden">
+<input type=3D"hidden" name=3D"ancestorId" value=3D"446957209">
+</fieldset>
+</fieldset>
+</div>
+<p></p>
+<h2 id=3D"RATOutputTCPClient(EnterpriseOnly)-TestRail">Test Rail</h2>
+<h3 id=3D"RATOutputTCPClient(EnterpriseOnly)-TestCases">Test Cases</h3>
+<div id=3D"expander-1235083607" class=3D"expand-container">
+<div role=3D"heading" aria-level=3D"6" id=3D"expander-control-1235083607" c=
+lass=3D"expand-control"><button type=3D"button" id=3D"expand-button-1235083=
+607" class=3D"aui-button aui-button-link aui-button-link-icon-text" aria-ex=
+panded=3D"true" aria-controls=3D"expander-content-1235083607"><span class=
+=3D"expand-icon aui-icon aui-icon-small aui-iconfont-chevron-down" aria-hid=
+den=3D"true"></span><span class=3D"expand-control-text conf-macro-render">C=
+lick here to expand...</span></button>
+</div>
+<div role=3D"region" id=3D"expander-content-1235083607" class=3D"expand-con=
+tent" aria-labelledby=3D"expand-button-1235083607">
+<div class=3D"confluence-information-macro confluence-information-macro-not=
+e">
+<p class=3D"title conf-macro-render">Test Case Links</p><span class=3D"aui-=
+icon aui-icon-small aui-iconfont-warning confluence-information-macro-icon"=
+></span>
+<div class=3D"confluence-information-macro-body">
+<ul>
+<li>This field may also link to a requirement on another page when similar =
+functionality exists in multiple locations in the application (click the Li=
+nk icon in the tool bar).</li>
+<li>An empty Test Case field suggests that requirement is not covered by th=
+e current test suite.</li>
+<li>Prefix a test link with=20
+<ul>
+<li><strong>A:</strong> for test cases that are automtaed&nbsp;<strong>and<=
+/strong> reporting results.</li>
+<li><strong>M:</strong> for test cases that must be performed manually (inc=
+luding Test Cases marked "Release" or "Automated (future)")</li>
+</ul></li>
+</ul>
+</div>
+</div>
+<div class=3D"confluence-information-macro confluence-information-macro-not=
+e">
+<p class=3D"title conf-macro-render">Configurations &amp; Test Data</p><spa=
+n class=3D"aui-icon aui-icon-small aui-iconfont-warning confluence-informat=
+ion-macro-icon"></span>
+<div class=3D"confluence-information-macro-body">
+<ul>
+<li>Configuration and test data files should be uploaded to the Test Rail T=
+est Case.</li>
+</ul>
+</div>
+</div>
+<p><br></p>
+</div>
+</div>
+<p><br></p>
+<div class=3D"table-wrap">
+<table class=3D"relative-table wrapped confluenceTable" data-snooker-col-se=
+ries=3D"numbers" data-snooker-locked-cols=3D"0" style=3D"width: 97.9178%;">
+<colgroup>
+<col style=3D"width: 1.62379%;">
+<col style=3D"width: 12.0385%;">
+<col style=3D"width: 45.5222%;">
+<col style=3D"width: 19.4823%;">
+<col style=3D"width: 21.3333%;">
+</colgroup>
+<tbody>
+<tr>
+<th class=3D"numberingColumn confluenceTh" contenteditable=3D"false" data-m=
+ce-resize=3D"false">#</th>
+<th class=3D"confluenceTh">Title</th>
+<th class=3D"confluenceTh">User Story</th>
+<th class=3D"confluenceTh">Notes</th>
+<th class=3D"confluenceTh"><p>Test Case(s) <sup>!</sup></p><p>(link to <a c=
+lass=3D"external-link" href=3D"https://esri.testrail.com/index.php?/dashboa=
+rd" rel=3D"nofollow">Test Rail</a>)</p></th>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">1</td>
+<td class=3D"confluenceTd">rat_output_tcpClient_release</td>
+<td class=3D"confluenceTd">
+<ul>
+<li>Verify that ? &nbsp;button links to the correct Help documentation page=
+</li>
+<li>Verify that there is a Hostname parameter and the Port number are the o=
+nly 2 parameters available</li>
+<li>Verify that Output data format dropdown options are: GeoJSON, EsriJSON,=
+ Delimited, JSON</li>
+<li>Verify that if "Delimited" is selected, you have the ability to enable =
+headers and set a delimiter. &nbsp;</li>
+<li>Verify that you can send data with a hostname (i.e. localhost) or ip ad=
+dress (i.e. 127.0.0.1)</li>
+<li>Verify that the user receives an error if an invalid port number is pro=
+vided</li>
+<li>Verifies Delimited and GeoJSON output data formats</li>
+</ul></td>
+<td class=3D"confluenceTd">This is a manual test.&nbsp; This test case is c=
+omplete.</td>
+<td class=3D"confluenceTd"><p>M: <a class=3D"external-link" href=3D"https:/=
+/esri.testrail.com/index.php?/cases/view/1602125" rel=3D"nofollow">https://=
+esri.testrail.com/index.php?/cases/view/1602125</a></p></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">2</td>
+<td class=3D"confluenceTd">rat_output_tcpClient_delimited</td>
+<td class=3D"confluenceTd"><p><span style=3D"color: rgb(32,32,32);">This te=
+st case verifies if the TCP Client Output is generating delimited output da=
+ta correctly.&nbsp; Also verifies that we can write a header row and add a =
+customer delimiter to the output.</span></p></td>
+<td class=3D"confluenceTd">This is a manual test.&nbsp; This test case is c=
+omplete.</td>
+<td class=3D"confluenceTd"><p>M: <a class=3D"external-link" href=3D"https:/=
+/esri.testrail.com/index.php?/cases/view/1602126" rel=3D"nofollow">https://=
+esri.testrail.com/index.php?/cases/view/1602126</a></p></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">3</td>
+<td class=3D"confluenceTd">rat_output_tcpClient_json</td>
+<td class=3D"confluenceTd"><span style=3D"color: rgb(32,32,32);">This test =
+case verifies if the TCP Client Output is generating JSON output data corre=
+ctly.</span></td>
+<td class=3D"confluenceTd">This is a manual test.&nbsp; This test case is c=
+omplete.</td>
+<td class=3D"confluenceTd"><p>M: <a class=3D"external-link" href=3D"https:/=
+/esri.testrail.com/index.php?/cases/view/1602127" rel=3D"nofollow">https://=
+esri.testrail.com/index.php?/cases/view/1602127</a></p></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">4</td>
+<td class=3D"confluenceTd">rat_output_tcpClient_esriJSON</td>
+<td class=3D"confluenceTd"><span style=3D"color: rgb(32,32,32);">This test =
+case verifies if the TCP Client Output is generating Esri JSON output data =
+correctly.</span></td>
+<td class=3D"confluenceTd">This is a manual test.&nbsp; This test case is c=
+omplete.</td>
+<td class=3D"confluenceTd"><p>M: <a class=3D"external-link" href=3D"https:/=
+/esri.testrail.com/index.php?/cases/view/1602128" rel=3D"nofollow">https://=
+esri.testrail.com/index.php?/cases/view/1602128</a></p></td>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" contenteditable=3D"false" data-m=
+ce-resize=3D"false">5</td>
+<td class=3D"confluenceTd">rat_output_tcpClient_geoJson</td>
+<td class=3D"confluenceTd"><span style=3D"color: rgb(32,32,32);">This test =
+case verifies if the TCP Client Output is generating geoJSON output data co=
+rrectly.</span></td>
+<td class=3D"confluenceTd">This is a manual test.&nbsp; This test case is c=
+omplete.</td>
+<td class=3D"confluenceTd"><p>M:<a class=3D"external-link" href=3D"https://=
+esri.testrail.com/index.php?/cases/view/1602129" rel=3D"nofollow">https://e=
+sri.testrail.com/index.php?/cases/view/1602129</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 id=3D"RATOutputTCPClient(EnterpriseOnly)-ManualTestRuns">Manual Test Ru=
+ns</h3>
+<div class=3D"table-wrap">
+<table class=3D"wrapped confluenceTable" data-snooker-col-series=3D"numbers=
+" data-snooker-locked-cols=3D"0">
+<colgroup>
+<col>
+<col>
+<col>
+<col>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr>
+<th class=3D"numberingColumn confluenceTh" data-mce-resize=3D"false"><br></=
+th>
+<th class=3D"confluenceTh">Date</th>
+<th class=3D"confluenceTh">Goal/Reason</th>
+<th class=3D"confluenceTh">Environment</th>
+<th class=3D"confluenceTh">Results/Notes</th>
+<th class=3D"confluenceTh">Link to Test Rail Test Run</th>
+</tr>
+<tr>
+<td class=3D"numberingColumn confluenceTd" data-mce-resize=3D"false">1</td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id=3D"RATOutputTCPClient(EnterpriseOnly)-Tasks(LinkstoDevtopia)">Tasks =
+(Links to Devtopia)</h2>
+<h2 id=3D"RATOutputTCPClient(EnterpriseOnly)-Userinteractionanddesign">User=
+ interaction and design</h2>
+<p></p>
+<p><br></p>
+<p><br></p>
+    </div>
+</body>
+</html>
+------=_Part_5904_1655257080.1775151748774--
