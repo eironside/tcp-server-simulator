@@ -31,6 +31,7 @@ The TCP Simulator should have the following features:
 11. JSON configuration file save/load.
 12. Backpressure handling: block and disconnect slow clients with GUI indicators.
 13. Header row: configurable whether to send to clients.
+14. Test strategy: mandatory automated unit, integration, and soak tests (reconnect storms, slow-client churn/backpressure, and large-file streaming/resource stability). Manual socket-tool checks are non-gating.
 
 ## Architecture Principle
 The GUI must not contain business logic. The simulator engine must be fully functional without a GUI, communicating via an event/callback interface. This enables future CLI mode and testability.

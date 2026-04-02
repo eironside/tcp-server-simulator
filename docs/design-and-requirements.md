@@ -111,6 +111,7 @@ These answers were provided by the project owner and inform all requirements bel
 | RQ17 | Timestamp clock/timezone policy | Normalize parsed timestamps to UTC; use monotonic clock for scheduling delays | Yes |
 | RQ18 | Standalone runtime preflight | Validate Python version and tkinter/Tk availability at startup with actionable errors | Yes |
 | RQ19 | GUI log monitoring mode | **No live monitoring**; load and refresh logs on demand | Yes |
+| RQ20 | Test strategy depth | **Mandatory automated integration + soak suites** for reconnect storms, slow-client churn, and large-file streaming/resource stability | Yes |
 
 ---
 
@@ -207,6 +208,16 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-46 | On config load, the application shall migrate known older schema versions; unknown or incompatible versions shall be rejected and replaced with defaults while preserving the original file and surfacing a clear warning. | MVP |
 | FR-47 | The application shall not auto-overwrite incompatible configuration files; migrated configurations are persisted only when the user explicitly saves. | MVP |
 
+### 3.8 Validation & Test Automation
+
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-48 | The project shall include a mandatory **automated integration test suite** that exercises repeated TCP connect/disconnect/reconnect storms (including Velocity-like lifecycle churn). | MVP |
+| FR-49 | The project shall include a mandatory **automated integration test suite** for slow-client churn and backpressure behavior (blocked state, watermark recovery, disconnect policy). | MVP |
+| FR-50 | The project shall include a mandatory **automated soak test suite** for large-file streaming and long-running resource stability (memory/descriptor growth, reconnect stability, no deadlock). | MVP |
+| FR-51 | Manual socket tools (e.g., netcat/telnet) may be used for exploratory smoke checks, but they are **non-gating** and not a substitute for automated suites. | MVP |
+| FR-52 | MVP release quality gate: unit tests, integration tests, and soak tests must pass before merge to release branch. | MVP |
+
 ---
 
 ## 4. Non-Functional Requirements
@@ -223,6 +234,8 @@ These answers were provided by the project owner and inform all requirements bel
 | NFR-08 | The GUI shall remain responsive during file loading, transmission, and high connection counts. All I/O shall be async. | MVP |
 | NFR-09 | On startup, the application shall run a runtime preflight check for Python version and tkinter/Tk availability; missing prerequisites shall produce actionable setup guidance instead of stack traces. | MVP |
 | NFR-10 | Large-file indexing/validation must execute in background without blocking startup; UI controls remain usable while scanning is in progress. | MVP |
+| NFR-11 | Automated test suites (unit + integration + soak) shall execute in CI for pull requests and release branches, with deterministic pass/fail reporting. | MVP |
+| NFR-12 | Soak test baseline shall run for at least **30 minutes** in CI and assert stable resource behavior (no unbounded memory/file-descriptor growth and no scheduler deadlock). | MVP |
 
 ---
 
@@ -478,7 +491,25 @@ Config compatibility follows a hybrid policy designed for safety and convenience
 
 The application should never silently mutate or overwrite an incompatible config file.
 
-### 5.5 Proposed Project Structure
+### 5.5 Test Strategy
+
+Testing follows a required automation-first approach:
+
+1. **Unit tests**
+- Engine logic (reader, scheduler, timestamp rewrite, config migration).
+- Fast and deterministic; run on every PR.
+
+2. **Integration tests (mandatory)**
+- Reconnect storm scenarios: repeated connect/disconnect cycles matching Velocity's testConnection/sampleMessages/feed-run behavior.
+- Slow-client churn scenarios: multiple clients with mixed throughput validating watermark transitions and disconnect logic.
+
+3. **Soak tests (mandatory)**
+- Large-file streaming for long duration (minimum 30 minutes in CI).
+- Assertions for resource stability and liveness (no deadlocks, reconnect loop remains healthy).
+
+Manual socket-tool checks (netcat/telnet) are optional diagnostics only and do not satisfy release criteria.
+
+### 5.6 Proposed Project Structure
 
 ```
 tcp-server-simulator/
@@ -516,12 +547,18 @@ tcp-server-simulator/
 │           ├── status_panel.py      # Stats, connection list, blocking indicators
 │           └── log_panel.py         # On-demand JSON log load/refresh
 ├── tests/
-│   ├── test_file_reader.py
-│   ├── test_scheduler.py
-│   ├── test_timestamp.py
-│   ├── test_tcp_server.py
-│   ├── test_tcp_client.py
-│   └── test_config.py
+│   ├── unit/
+│   │   ├── test_file_reader.py
+│   │   ├── test_scheduler.py
+│   │   ├── test_timestamp.py
+│   │   └── test_config.py
+│   ├── integration/
+│   │   ├── test_tcp_server_reconnect_storm.py
+│   │   ├── test_tcp_client_reconnect_storm.py
+│   │   ├── test_slow_client_churn_backpressure.py
+│   │   └── test_udp_reply_to_senders_cache.py
+│   └── soak/
+│       └── test_large_file_streaming_stability.py
 ├── configs/
 │   └── example.json                 # Example config file
 ├── data/
@@ -628,7 +665,7 @@ The following gaps from the original copilot-instructions have been resolved in 
 
 ## 8. Resolved Open Questions
 
-All design questions have been resolved. See Section 2 for the complete decision log including RQ1–RQ19.
+All design questions have been resolved. See Section 2 for the complete decision log including RQ1–RQ20.
 
 ---
 
@@ -638,9 +675,9 @@ All design questions have been resolved. See Section 2 for the complete decision
 
 | Phase | Scope | Notes |
 |-------|-------|-------|
-| **Phase 1: Foundation** | Project structure, config schema + schema versioning/migration, JSON config load/save, streaming file reader with validation, unit tests | No GUI, no networking yet. Just the engine core. |
-| **Phase 2: Transport** | TCP server (broadcast), TCP client (with auto-reconnect), UDP server, UDP client, connection manager with backpressure/slow client detection | Test with netcat/telnet. No GUI yet. |
-| **Phase 3: Scheduler** | Rate control (features/s), step mode, auto mode, loop mode, pause/resume, timestamp rewriting (ISO 8601, epoch millis, epoch seconds) | Integrates engine + transport. Testable via scripts. |
+| **Phase 1: Foundation** | Project structure, config schema + schema versioning/migration, JSON config load/save, streaming file reader with validation, unit tests | No GUI, no networking yet. Unit test baseline established. |
+| **Phase 2: Transport** | TCP server (broadcast), TCP client (with auto-reconnect), UDP server, UDP client, connection manager with backpressure/slow client detection | Mandatory automated integration tests for reconnect storms and slow-client churn/backpressure. Manual netcat/telnet is optional smoke only. |
+| **Phase 3: Scheduler** | Rate control (features/s), step mode, auto mode, loop mode, pause/resume, timestamp rewriting (ISO 8601, epoch millis, epoch seconds) | Integrates engine + transport with mandatory automated soak coverage for large-file streaming/resource stability. |
 | **Phase 4: GUI** | Main window, config panel, file browser + preview, transport controls (start/stop/pause/step), status panel (connections, rate, progress, blocking), on-demand log panel (load/refresh), config save/load | Full GUI wired to engine. This is the MVP delivery. |
 
 ### Post-MVP
