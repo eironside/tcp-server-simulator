@@ -20,14 +20,15 @@ This plan translates the approved requirements into an implementation sequence y
 
 MVP is complete only when all of the following are true:
 
-1. Functional requirements FR-01 through FR-54 marked MVP are implemented.
-2. Non-functional requirements NFR-01 through NFR-12 are satisfied.
+1. Functional requirements FR-01 through FR-55 marked MVP are implemented.
+2. Non-functional requirements NFR-01 through NFR-13 are satisfied.
 3. Automated suites pass for TM-INT-01, TM-INT-02, TM-INT-03, TM-SOAK-01, TM-SOAK-02.
 4. GUI supports server/client modes, TCP/UDP, file preview, transport controls, status panel, and on-demand log load/refresh.
 5. Runtime reconfiguration works without restart:
    - Rate updates take effect on next scheduler interval.
    - File swaps occur on safe boundary, preserve active connections, avoid old/new interleaving, and send new header once when enabled.
-6. App starts with preflight checks (Python version and tkinter/Tk availability) and exits with actionable guidance if prerequisites are missing.
+6. Standalone `scripts/preflight.py` succeeds in a ready environment and fails with actionable remediation output in a broken environment.
+7. App startup preflight reuses the same validator as `scripts/preflight.py` (no duplicated check logic).
 
 ---
 
@@ -72,15 +73,19 @@ Checklist:
 - [ ] Create source tree from Section 5.6 in design doc.
 - [ ] Add package entrypoints so `python -m tcp_sim` works.
 - [ ] Add `pyproject.toml` with editable install support.
+- [ ] Add venv-first bootstrap instructions for Windows and Linux.
 - [ ] Add runtime deps (stdlib-only target) and dev deps (`pytest`, `pytest-asyncio`, soak tooling as needed).
 - [ ] Add test markers for `unit`, `integration`, `soak`.
 - [ ] Add CI workflow skeleton with separate jobs for unit, integration, soak.
+- [ ] Add standalone `scripts/preflight.py` wired to shared preflight validator code.
 
 Exit criteria:
 
-1. `pip install -e .` succeeds.
-2. `python -m tcp_sim --help` or equivalent launch path works.
-3. Empty/smoke tests run in CI.
+1. Venv creation/activation plus `pip install -e .` succeeds on Windows and Linux.
+2. `python scripts/preflight.py` returns zero in a ready environment.
+3. `python scripts/preflight.py` returns non-zero with actionable diagnostics when prerequisites are intentionally broken.
+4. `python -m tcp_sim --help` or equivalent launch path works.
+5. Empty/smoke tests run in CI.
 
 ## Phase 1 - Foundation (Config, Logging, File Reader)
 
@@ -92,6 +97,7 @@ Scope:
 2. JSON structured logging with rotation and backup retention.
 3. Streaming file reader with RFC 4180 parsing and progressive background scan.
 4. Invalid-line tracking and discard behavior.
+5. Shared preflight validator consumed by both startup and `scripts/preflight.py`.
 
 Checklist:
 
@@ -99,6 +105,11 @@ Checklist:
   - [ ] `schema_version`
   - [ ] deterministic migration for known old versions
   - [ ] reject unknown/newer incompatible versions with warning and safe defaults
+- [ ] Implement shared preflight validator module used by app startup and `scripts/preflight.py`:
+  - [ ] Python version check (3.10+)
+  - [ ] active virtual environment check
+  - [ ] tkinter/Tk import/initialization check
+  - [ ] actionable remediation messages and non-zero failure codes
 - [ ] Implement `logging/json_logger.py` with:
   - [ ] JSON records for connection and send events
   - [ ] size-based rotation (`log_rotation_max_bytes`)
@@ -278,7 +289,21 @@ Recommended minimum structure:
 Suggested commands:
 
 ```bash
+# Windows (PowerShell)
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
 pip install -e .
+python scripts/preflight.py
+
+# Linux
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -e .
+python scripts/preflight.py
+
+# Tests (with venv active)
 pytest -m unit -q
 pytest -m integration -q
 pytest -m soak -q

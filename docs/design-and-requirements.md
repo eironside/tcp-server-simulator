@@ -109,7 +109,7 @@ These answers were provided by the project owner and inform all requirements bel
 | RQ15 | Backpressure queue model | Per-client outbound queue with high/low watermarks and hard cap | Yes |
 | RQ16 | CSV parsing semantics | RFC 4180-style quoted-field handling including embedded delimiters/newlines | Yes |
 | RQ17 | Timestamp clock/timezone policy | Normalize parsed timestamps to UTC; use monotonic clock for scheduling delays | Yes |
-| RQ18 | Standalone runtime preflight | Validate Python version and tkinter/Tk availability at startup with actionable errors | Yes |
+| RQ18 | Standalone runtime preflight | Provide standalone `scripts/preflight.py` and run the same checks at startup. Validate Python version, active virtual environment, and tkinter/Tk availability with actionable errors. | Yes |
 | RQ19 | GUI log monitoring mode | **No live monitoring**; load and refresh logs on demand | Yes |
 | RQ20 | Test strategy depth | **Mandatory automated integration + soak suites** for reconnect storms, slow-client churn, and large-file streaming/resource stability | Yes |
 | RQ21 | Runtime reconfiguration behavior | Change rate and data file without restarting app; apply rate immediately and swap file at next safe boundary | Yes |
@@ -227,6 +227,7 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-52 | MVP release quality gate: unit tests, integration tests, and soak tests must pass before merge to release branch. | MVP |
 | FR-53 | Automated suites shall implement the named MVP matrix scenarios in Section **5.5.1** (`TM-INT-01` through `TM-SOAK-02`). | MVP |
 | FR-54 | Each matrix scenario shall define setup profile, duration, and numeric pass/fail thresholds; CI shall fail when any threshold is violated. | MVP |
+| FR-55 | The project shall provide a standalone `scripts/preflight.py` command that exits non-zero when prerequisites fail and prints actionable setup guidance (Python version, active virtual environment, tkinter/Tk availability). | MVP |
 
 ---
 
@@ -238,14 +239,15 @@ These answers were provided by the project owner and inform all requirements bel
 | NFR-02 | The application shall **stream** files line-by-line. No file size limit; memory usage shall remain bounded regardless of file size. | MVP |
 | NFR-03 | The application shall support at least **50 simultaneous client connections** in server mode. | MVP |
 | NFR-04 | The application shall provide a **GUI** as its primary interface. The engine shall be decoupled to allow future CLI use. | MVP |
-| NFR-05 | The application shall be distributed as **source only** (clone + `pip install -e .` + `python -m tcp_sim`). | MVP |
+| NFR-05 | The application shall be distributed as **source only** with a documented **venv-first** setup workflow (create/activate virtual environment, `pip install -e .`, then `python -m tcp_sim`). | MVP |
 | NFR-06 | The application shall shut down gracefully on window close or SIGINT/SIGTERM, closing all connections cleanly. | MVP |
 | NFR-07 | The application shall not crash or hang when a client disconnects unexpectedly. | MVP |
 | NFR-08 | The GUI shall remain responsive during file loading, transmission, and high connection counts. All I/O shall be async. | MVP |
-| NFR-09 | On startup, the application shall run a runtime preflight check for Python version and tkinter/Tk availability; missing prerequisites shall produce actionable setup guidance instead of stack traces. | MVP |
+| NFR-09 | On startup and via standalone `scripts/preflight.py`, the application shall run runtime preflight checks for Python version, active virtual environment, and tkinter/Tk availability; missing prerequisites shall produce actionable setup guidance instead of stack traces. | MVP |
 | NFR-10 | Large-file indexing/validation must execute in background without blocking startup; UI controls remain usable while scanning is in progress. | MVP |
 | NFR-11 | Automated test suites (unit + integration + soak) shall execute in CI for pull requests and release branches, with deterministic pass/fail reporting. | MVP |
 | NFR-12 | Soak test baseline shall run for at least **30 minutes** in CI and assert stable resource behavior (no unbounded memory/file-descriptor growth and no scheduler deadlock). | MVP |
+| NFR-13 | Local development and manual execution instructions shall assume an activated virtual environment; global-site-package installs are not the recommended workflow. | MVP |
 
 ---
 
@@ -458,6 +460,12 @@ This preserves the relative timing between events while anchoring them to the cu
 - No automatic live log streaming/tailing in MVP (or post-MVP by default).
 - On-demand refresh reduces tkinter UI update pressure during high-throughput sends.
 
+#### Environment Preflight
+- Provide a standalone script at `scripts/preflight.py` that users can run before first launch.
+- The script and application startup must use the same validation logic to avoid drift.
+- Minimum checks: Python version compatibility (3.10+), active virtual environment, tkinter/Tk import availability.
+- Preflight failures must return non-zero exit code and actionable remediation text.
+
 ### 5.4 Configuration
 
 Configuration is saved/loaded as **JSON** files. The GUI provides a "Save Config" / "Load Config" button pair.
@@ -598,6 +606,8 @@ tcp-server-simulator/
 │   │   └── test_udp_reply_to_senders_cache.py
 │   └── soak/
 │       └── test_large_file_streaming_stability.py
+├── scripts/
+│   └── preflight.py                # Standalone environment readiness check
 ├── configs/
 │   └── example.json                 # Example config file
 ├── data/
@@ -630,6 +640,7 @@ The following gaps from the original copilot-instructions have been resolved in 
 | No config file support | JSON config save/load (FR-41, FR-42) |
 | Logging undefined | JSON structured logging to file + GUI log panel (FR-35 through FR-40) |
 | Rate unit ambiguous | Features/second with KB/s display (FR-14, FR-15) |
+| No explicit readiness command | Standalone `scripts/preflight.py` plus startup preflight checks (FR-55, NFR-09) |
 
 ---
 
