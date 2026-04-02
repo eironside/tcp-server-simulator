@@ -1,9 +1,10 @@
 # TCP Server Simulator — Design & Requirements Document
 
-> **Status:** DRAFT — Open questions resolved, ready for implementation planning  
+> **Status:** READY FOR IMPLEMENTATION — All design decisions resolved  
 > **Last Updated:** 2026-04-02  
 > **Target Platforms:** Windows, Linux  
 > **Language:** Python 3.10+  
+> **GUI Framework:** tkinter (stdlib)  
 > **Distribution:** Source only (for now)  
 > **Interface:** GUI (with underlying engine decoupled for future CLI use)
 
@@ -91,6 +92,15 @@ These answers were provided by the project owner and inform all requirements bel
 | Q18 | GeoEvent compatibility | **No** — clean-slate design | N/A |
 | Q19 | Primary users | **Product Engineers** testing ArcGIS Velocity for Enterprise | N/A |
 | Q20 | Multiple files | **No** — single file per instance. Run separate copies for separate files. | Yes |
+| RQ1 | GUI framework | **tkinter** (stdlib). It doesn't have to be nice. | Yes |
+| RQ2 | Dark mode / theming | **No** | N/A |
+| RQ3 | UDP server recipient discovery | **Both** — support multicast and reply-to-senders, user-selectable | Yes |
+| RQ4 | Slow-client disconnect timeout | **Configurable**, default **10 seconds** | Yes |
+| RQ5 | Max reconnect backoff (client) | **Configurable**, default **30 seconds** | Yes |
+| RQ6 | Preview rows in GUI | **10 rows** | Yes |
+| RQ7 | Show discarded lines in preview | **Yes** — highlighted red, with total discarded count | Yes |
+| RQ8 | Remember last config on startup | **Yes** — auto-load last-used config | Yes |
+| RQ9 | Log rotation | **Configurable** with sensible default (10 MB) | Yes |
 
 ---
 
@@ -114,7 +124,7 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-06 | The user shall be able to configure the field delimiter character in the GUI. | MVP |
 | FR-07 | The application shall support a configurable header row toggle. When enabled, the first line is treated as field names (used for field selection dropdowns). | MVP |
 | FR-08 | The user shall be able to toggle whether the header row is sent to clients. When enabled in server mode, the header shall be sent as the **first message to each newly connected client**. | MVP |
-| FR-09 | The application shall display a preview of the loaded file (first N rows, field count, total line count) in the GUI. | MVP |
+| FR-09 | The application shall display a preview of the loaded file (**first 10 rows**, field count, total line count) in the GUI. Invalid lines shall be highlighted in red with a total discarded count. | MVP |
 | FR-10 | The application shall handle files with inconsistent line endings (CRLF, LF). | MVP |
 | FR-11 | The application shall support UTF-8 encoded files. | MVP |
 | FR-12 | The application shall validate column count consistency on load. Lines with inconsistent column counts shall be **discarded** and logged. | MVP |
@@ -162,7 +172,7 @@ These answers were provided by the project owner and inform all requirements bel
 |----|-------------|----------|
 | FR-35 | The application shall log all connection events (connect, disconnect, reconnect, slow client disconnect) in **JSON structured format**. | MVP |
 | FR-36 | The application shall log transmission statistics: features sent, bytes sent, elapsed time, current rate (feat/s and KB/s). | MVP |
-| FR-37 | The application shall write JSON logs to a configurable log file. | MVP |
+| FR-37 | The application shall write JSON logs to a configurable log file with **log rotation** (default: 10 MB max, configurable). | MVP |
 | FR-38 | The GUI shall display a live scrolling log view showing recent JSON log entries. | MVP |
 | FR-39 | Log verbosity shall be configurable (DEBUG, INFO, WARN, ERROR). | MVP |
 | FR-40 | Post-MVP: Dedicated log viewer UI component with filtering and search. | Post-MVP |
@@ -174,6 +184,7 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-41 | The application shall support saving the current configuration to a **JSON file**. | MVP |
 | FR-42 | The application shall support loading a previously saved JSON configuration file, populating all GUI fields. | MVP |
 | FR-43 | The application shall provide sensible defaults for all configuration values. | MVP |
+| FR-44 | The application shall **auto-load the last-used configuration** on startup. | MVP |
 
 ---
 
@@ -198,23 +209,18 @@ These answers were provided by the project owner and inform all requirements bel
 
 **Decided:** Python 3.10+ with `asyncio` for async TCP/UDP handling.
 
-**GUI Framework (to be decided — see remaining open questions):**
-- **Option A: PySide6 / PyQt6** — Full desktop GUI. Mature, powerful, cross-platform. Heavy dependency (~150 MB). Best for complex interactive UIs with real-time updates.
-- **Option B: tkinter + ttkbootstrap** — Lightweight, ships with Python. Limited widget set but sufficient for this tool. Zero additional dependencies.
-- **Option C: NiceGUI / Gradio** — Web-based UI served locally. Modern look, easy layout. Requires browser. Good for dashboards and real-time stats display.
-- **Option D: Dear PyGui** — GPU-accelerated immediate-mode GUI. Fast real-time updates. Smaller community.
+**GUI Framework:** tkinter (ships with Python stdlib). No additional GUI dependencies. The UI is functional, not pretty — this is an internal engineering tool, not a consumer product.
 
-**Distribution:** Source-only. Users clone the repo and run with Python 3.10+. Dependencies managed via `requirements.txt` or `pyproject.toml`.
+**Distribution:** Source-only. Users clone the repo and run with Python 3.10+. Dependencies managed via `requirements.txt` or `pyproject.toml`. No theming or dark mode.
 
-**Key Libraries (anticipated):**
+**Key Libraries (all stdlib except where noted):**
 - `asyncio` — TCP/UDP server and client
+- `tkinter` — GUI (stdlib, ships with Python)
 - `json` — Config files, structured logging
 - `csv` — File parsing (with manual fallback for custom delimiters)
 - `pathlib` — Cross-platform path handling
 - `logging` — Structured JSON logging via custom formatter
-- GUI framework TBD
-
-**Alternative:** Go or Rust for true single-binary distribution and lower resource usage. Requires compilation per platform.
+- `threading` — Bridge between tkinter main thread and asyncio event loop
 
 ### 5.2 High-Level Components
 
@@ -302,7 +308,9 @@ The recommended pattern is a **controller** layer that bridges the GUI thread an
 
 #### Protocol Support
 Both TCP and UDP are supported. UDP has no concept of "connections" so:
-- **UDP Server mode:** Send datagrams to a configured multicast group or to all addresses that have previously sent a packet to the listen port.
+- **UDP Server mode:** Two recipient discovery options, user-selectable in the GUI:
+  - **Multicast:** Send datagrams to a configured multicast group address.
+  - **Reply to senders:** Send datagrams to all addresses that have previously sent a packet to our listen port. Track stale addresses with a configurable expiry.
 - **UDP Client mode:** Send datagrams to a configured host:port. No connection, no reconnect logic needed.
 
 UDP mode should clearly indicate in the UI that delivery is not guaranteed.
@@ -337,14 +345,14 @@ Stream the file line-by-line using a buffered reader. Do not load the entire fil
 Monitor per-client TCP write buffer. If a client's buffer exceeds a threshold:
 1. Log the blocking status (JSON structured log).
 2. Show blocking indicator in the GUI.
-3. If the client cannot drain within a configurable timeout, **disconnect** it.
+3. If the client cannot drain within the configured timeout (default: **10 seconds**), **disconnect** it.
 4. Log the disconnection with client address and reason.
 5. Show disconnected slow clients in the GUI status area.
 
 Do **not** slow down the broadcast for other clients because one client is slow.
 
 #### Client Mode: Auto-Reconnect
-On disconnect, automatically attempt to reconnect with exponential backoff (e.g., 1s, 2s, 4s, 8s, max 30s). Display:
+On disconnect, automatically attempt to reconnect with exponential backoff (1s, 2s, 4s, 8s, ... max **30 seconds**, configurable). Display:
 - Reconnection attempts in progress
 - Total reconnect count
 - Last disconnect reason
@@ -388,7 +396,11 @@ The config file stores all user-configurable settings:
   "replace_timestamp": true,
   "line_ending": "\n",
   "log_file": "tcp-sim.log",
-  "log_level": "INFO"
+  "log_level": "INFO",
+  "slow_client_timeout_seconds": 10,
+  "reconnect_max_backoff_seconds": 30,
+  "log_rotation_max_bytes": 10485760,
+  "udp_recipient_mode": "reply_to_senders"
 }
 ```
 
@@ -495,7 +507,7 @@ The following gaps from the original copilot-instructions have been resolved in 
 
 1. **Having to install Python.** Even "source only" requires a working Python 3.10+ environment. Not every Windows machine has one. Include a "Prerequisites" section in the README with exact install steps.
 
-2. **GUI framework choice matters.** tkinter looks like a tool from 1997. PySide6 looks professional but adds ~150 MB of dependencies. NiceGUI opens a browser tab, which some users find weird. Pick wrong and you'll hear about it.
+2. **GUI framework choice matters.** You chose tkinter. It will look like a tool from 1997 because it basically is. Your users will live with it because "it doesn't have to be nice" — until someone shows it to a stakeholder. At that point, consider `ttk` themed widgets at minimum. Also: tkinter's `Treeview` widget for the file preview table is adequate but quirky — red highlighting for invalid rows will require tag-based styling.
 
 3. **No way to see what was *actually sent*.** The preview shows file contents, but users will want to see the exact bytes that went over the wire — especially when timestamp rewriting is active. Consider a "last sent line" display in the status panel.
 
@@ -503,38 +515,9 @@ The following gaps from the original copilot-instructions have been resolved in 
 
 ---
 
-## 8. Remaining Open Questions
+## 8. Resolved Open Questions
 
-Most design questions have been resolved (see Section 2). The following still need decisions before or during implementation:
-
-### GUI Framework
-
-| # | Question | Options | Recommendation |
-|---|----------|---------|----------------|
-| RQ1 | **Which Python GUI framework?** | PySide6/PyQt6, tkinter+ttkbootstrap, NiceGUI (web-based), Dear PyGui | PySide6 for a serious desktop app. tkinter if you want zero deps. NiceGUI if your users are comfortable with a browser opening. |
-| RQ2 | **Should the GUI support theming / dark mode?** | Yes, No, System-follows | Most engineers prefer dark mode. PySide6 and ttkbootstrap support it natively. |
-
-### Network Details
-
-| # | Question | Options | Recommendation |
-|---|----------|---------|----------------|
-| RQ3 | **UDP server mode: how to discover recipients?** | Send to multicast group, Send to all IPs that have sent us a packet, Configure target list manually | Multicast is cleanest but requires network configuration. "Reply to senders" is most practical. |
-| RQ4 | **What is the slow-client disconnect timeout?** | Fixed (e.g., 5s), Configurable, Scale with send rate | Configurable with a sensible default (5-10 seconds). |
-| RQ5 | **What is the max reconnect backoff interval (client mode)?** | Fixed at 30s, Configurable, Unlimited | Configurable with a default of 30 seconds. |
-
-### Data
-
-| # | Question | Options | Recommendation |
-|---|----------|---------|----------------|
-| RQ6 | **How many preview rows to show in the GUI?** | 5, 10, 20, Configurable | 10 rows is a good default. |
-| RQ7 | **Should discarded (invalid) lines be shown in the preview?** | Yes (highlighted), No (filtered out), Summary count only | Show in preview highlighted red, with a count of total discarded. |
-
-### Operational
-
-| # | Question | Options | Recommendation |
-|---|----------|---------|----------------|
-| RQ8 | **Should the app remember the last-used config on startup?** | Yes (auto-load last config), No (always start fresh), Ask user | Auto-load last config. Engineers iterate on the same test repeatedly. |
-| RQ9 | **Log rotation / max log file size?** | No rotation, Rotate at 10MB, Configurable | Configurable with a sensible default. Without it, overnight tests will produce enormous log files. |
+All design questions have been resolved. See Section 2 for the complete decision log including RQ1–RQ9.
 
 ---
 

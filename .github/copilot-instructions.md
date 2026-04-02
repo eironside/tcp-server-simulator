@@ -3,7 +3,7 @@ We need a TCP Simulator that can be used to test our ArcGIS Velocity product. Th
 ## Technology Stack
 - **Language:** Python 3.10+
 - **Async:** asyncio for TCP/UDP handling
-- **GUI:** Required (framework TBD — see design doc RQ1)
+- **GUI:** tkinter (stdlib) — functional, not pretty
 - **Distribution:** Source only (for now)
 - **Config format:** JSON
 - **Log format:** JSON structured
