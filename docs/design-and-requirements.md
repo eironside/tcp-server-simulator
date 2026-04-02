@@ -86,7 +86,7 @@ These answers were provided by the project owner and inform all requirements bel
 | Q12 | Timestamp formats | **ISO 8601, epoch millis, epoch seconds** (integer and fractional). Auto-detect post-MVP | Yes (explicit), No (auto-detect) |
 | Q13 | CSV validation | **Yes** — discard lines with inconsistent column count | Yes |
 | Q14 | Max file size | **No limit** — stream the file, don't load into memory | Yes |
-| Q15 | Line subsetting | **Post-MVP** — MVP sends all lines with looping. Later: start/end line, first N. No random sampling. | No |
+| Q15 | Line navigation and subsetting | **MVP:** jump-to-line in step mode. **Post-MVP:** start/end line and first N lines. No random sampling. | Yes (jump), No (range/N) |
 | Q16 | Log format | **JSON structured**. Post-MVP: log viewer UI component | Yes (JSON), No (viewer) |
 | Q17 | Config files | **Yes, JSON format** | Yes |
 | Q18 | GeoEvent compatibility | **No** — clean-slate design | N/A |
@@ -112,6 +112,7 @@ These answers were provided by the project owner and inform all requirements bel
 | RQ18 | Standalone runtime preflight | Validate Python version and tkinter/Tk availability at startup with actionable errors | Yes |
 | RQ19 | GUI log monitoring mode | **No live monitoring**; load and refresh logs on demand | Yes |
 | RQ20 | Test strategy depth | **Mandatory automated integration + soak suites** for reconnect storms, slow-client churn, and large-file streaming/resource stability | Yes |
+| RQ21 | Runtime reconfiguration behavior | Change rate and data file without restarting app; apply rate immediately and swap file at next safe boundary | Yes |
 
 ---
 
@@ -152,11 +153,14 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-15 | The GUI shall display both **features/s** and **KB/s** in real time during transmission. | MVP |
 | FR-16 | The application shall support **automatic mode**: continuously send lines at the configured rate. | MVP |
 | FR-17 | The application shall support **step mode**: send one line per user click (manual advance). | MVP |
+| FR-17a | In step mode, the user shall be able to **jump to a specific data line number** and send from that point. | MVP |
 | FR-18 | The application shall support **looping**: when EOF is reached, restart from the first data line. Looping is on by default in automatic mode. | MVP |
 | FR-19 | The application shall allow the user to **pause and resume** transmission without dropping connections. | MVP |
 | FR-20 | The GUI shall display the current line number, total lines, and a progress indicator during transmission. | MVP |
 | FR-20a | In server broadcast mode, automatic transmission shall **pause when zero clients are connected** and resume when at least one client reconnects. | MVP |
 | FR-20b | While paused due to zero connected clients, the transmission line pointer shall not advance. | MVP |
+| FR-20c | The user shall be able to **change send rate during active transmission** without restarting the application; the new rate shall take effect by the next scheduling interval. | MVP |
+| FR-20d | The user shall be able to **load/swap the input file without restarting**. If swap is applied while sending, the switch occurs at the next message boundary, resets to line 1 of the new file, and preserves active network connections. | MVP |
 | FR-21 | Post-MVP: Support **original-rate mode** — send lines at the rate implied by the timestamp deltas in the original data. | Post-MVP |
 | FR-22 | Post-MVP: Support sending a **subset of lines** (start/end line, first N lines). | Post-MVP |
 
@@ -217,6 +221,8 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-50 | The project shall include a mandatory **automated soak test suite** for large-file streaming and long-running resource stability (memory/descriptor growth, reconnect stability, no deadlock). | MVP |
 | FR-51 | Manual socket tools (e.g., netcat/telnet) may be used for exploratory smoke checks, but they are **non-gating** and not a substitute for automated suites. | MVP |
 | FR-52 | MVP release quality gate: unit tests, integration tests, and soak tests must pass before merge to release branch. | MVP |
+| FR-53 | Automated suites shall implement the named MVP matrix scenarios in Section **5.5.1** (`TM-INT-01` through `TM-SOAK-02`). | MVP |
+| FR-54 | Each matrix scenario shall define setup profile, duration, and numeric pass/fail thresholds; CI shall fail when any threshold is violated. | MVP |
 
 ---
 
@@ -386,6 +392,12 @@ Use a progressive background scan for total-line and invalid-line accounting:
 3. Mark total/invalid counts as provisional until scan completes.
 4. Publish periodic scan progress updates to the GUI.
 
+Runtime file swap behavior:
+1. User selects and validates new file in background.
+2. On apply, perform atomic source switch at next message boundary.
+3. Reset active line pointer to first data line of new file.
+4. Keep active transport sessions connected.
+
 #### Backpressure & Slow Clients
 Use per-client outbound queues and watermarks. Default thresholds (configurable):
 - High watermark: **256 KB**
@@ -429,6 +441,7 @@ This preserves the relative timing between events while anchoring them to the cu
 #### Rate Control
 - Primary unit: **features per second** (1 feature = 1 CSV data line).
 - The GUI displays both features/s and KB/s in real time.
+- Rate changes during active send are supported and take effect without application restart.
 - Post-MVP: **original-rate mode** — use timestamp deltas between consecutive rows to determine send timing.
 
 #### Log Viewing Behavior
@@ -508,6 +521,23 @@ Testing follows a required automation-first approach:
 - Assertions for resource stability and liveness (no deadlocks, reconnect loop remains healthy).
 
 Manual socket-tool checks (netcat/telnet) are optional diagnostics only and do not satisfy release criteria.
+
+### 5.5.1 MVP Test Matrix
+
+| ID | Suite | Scenario | Setup Profile | Duration | Pass/Fail Criteria |
+|----|-------|----------|---------------|----------|--------------------|
+| TM-INT-01 | Integration | **Server reconnect storm (Velocity lifecycle)** | 20 concurrent synthetic clients repeating `testConnection -> sampleMessages -> feed run` cycle for 200 rounds. Broadcast mode, header-on-connect enabled. | >= 15 min | 1) No process crash/deadlock. 2) >= 99.5% connection-attempt success. 3) No leaked active client sessions after cycle completion. 4) Memory growth <= 15% after 5-min warmup. |
+| TM-INT-02 | Integration | **Client reconnect storm (flapping upstream server)** | Simulator in client mode against flapping TCP server (`5s up / 5s down`) for 300 transitions. `reconnect_max_backoff_seconds` set to 5 for determinism. | >= 20 min | 1) Reconnect counter increments for each outage. 2) Sending resumes within `max_backoff + 1s` after server recovery. 3) No malformed/partial line framing after reconnect. 4) No uncaught exceptions. |
+| TM-INT-03 | Integration | **Slow-client churn and backpressure** | Server mode with 50 clients: 40 normal consumers + 10 throttled consumers (<= 1 KB/s). Send rate >= 200 features/s with ~512-byte lines. | >= 20 min | 1) Slow clients enter blocked state and disconnect within `slow_client_timeout_seconds + 2s`. 2) Normal clients remain connected and continue receiving data. 3) Per-client queues never exceed hard cap. 4) No global broadcast stall caused by slow clients. |
+| TM-SOAK-01 | Soak | **Large-file streaming stability** | Server mode, looping enabled, input file >= 5 GB, 10 normal clients. | >= 30 min in CI (>= 2 h local extended) | 1) No crash/deadlock. 2) RSS memory growth <= 15% after warmup (rolling 10-min window). 3) File/socket handle growth is non-monotonic (delta <= +5 after warmup). 4) Throughput remains within +/-10% of configured rate excluding planned pause periods. |
+| TM-SOAK-02 | Soak | **UDP reply-to-senders cache stability** | UDP server in reply-to-senders mode with churned sender endpoints (>= 2,000 unique address:port pairs). | >= 30 min | 1) Recipient cache size never exceeds configured cap. 2) Expired recipients removed within `cleanup_interval + 5s`. 3) Overflow eviction follows configured policy (`lru`). 4) No unbounded memory growth. |
+
+### 5.5.2 CI Gate Policy
+
+1. PR gate must run: unit + integration + soak baseline profiles.
+2. Release-branch gate must run: full unit + integration + soak profiles.
+3. A single failed matrix scenario blocks merge.
+4. Manual socket-tool checks are informational only and cannot override failing automated gates.
 
 ### 5.6 Proposed Project Structure
 
@@ -665,7 +695,7 @@ The following gaps from the original copilot-instructions have been resolved in 
 
 ## 8. Resolved Open Questions
 
-All design questions have been resolved. See Section 2 for the complete decision log including RQ1–RQ20.
+All design questions have been resolved. See Section 2 for the complete decision log including RQ1–RQ21.
 
 ---
 
@@ -676,16 +706,16 @@ All design questions have been resolved. See Section 2 for the complete decision
 | Phase | Scope | Notes |
 |-------|-------|-------|
 | **Phase 1: Foundation** | Project structure, config schema + schema versioning/migration, JSON config load/save, streaming file reader with validation, unit tests | No GUI, no networking yet. Unit test baseline established. |
-| **Phase 2: Transport** | TCP server (broadcast), TCP client (with auto-reconnect), UDP server, UDP client, connection manager with backpressure/slow client detection | Mandatory automated integration tests for reconnect storms and slow-client churn/backpressure. Manual netcat/telnet is optional smoke only. |
-| **Phase 3: Scheduler** | Rate control (features/s), step mode, auto mode, loop mode, pause/resume, timestamp rewriting (ISO 8601, epoch millis, epoch seconds) | Integrates engine + transport with mandatory automated soak coverage for large-file streaming/resource stability. |
-| **Phase 4: GUI** | Main window, config panel, file browser + preview, transport controls (start/stop/pause/step), status panel (connections, rate, progress, blocking), on-demand log panel (load/refresh), config save/load | Full GUI wired to engine. This is the MVP delivery. |
+| **Phase 2: Transport** | TCP server (broadcast), TCP client (with auto-reconnect), UDP server, UDP client, connection manager with backpressure/slow client detection | Must pass integration matrix scenarios `TM-INT-01`, `TM-INT-02`, `TM-INT-03`. Manual netcat/telnet is optional smoke only. |
+| **Phase 3: Scheduler** | Rate control (features/s), step mode, jump-to-line, auto mode, loop mode, pause/resume, timestamp rewriting (ISO 8601, epoch millis, epoch seconds) | Must pass soak matrix scenarios `TM-SOAK-01`, `TM-SOAK-02`. |
+| **Phase 4: GUI** | Main window, config panel, file browser + preview, transport controls (start/stop/pause/step/jump), runtime file/rate reconfiguration without restart, status panel (connections, rate, progress, blocking), on-demand log panel (load/refresh), config save/load | Full GUI wired to engine. This is the MVP delivery. |
 
 ### Post-MVP
 
 | Phase | Scope |
 |-------|-------|
 | **Phase 5: Enhanced Timing** | Original-rate replay mode (send at timestamp deltas), auto-detect timestamp format |
-| **Phase 6: Line Control** | Start/end line selection, first N lines, jump-to-line in step mode |
+| **Phase 6: Line Control** | Start/end line selection, first N lines |
 | **Phase 7: TLS/SSL** | Optional TLS for TCP server and client, certificate configuration in GUI |
 | **Phase 8: Log Viewer** | Dedicated log viewer UI component with filtering, search, and export |
 | **Phase 9: Packaging** | PyInstaller/cx_Freeze single-binary builds, Docker image, pip package |

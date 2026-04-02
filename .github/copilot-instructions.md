@@ -24,7 +24,7 @@ The TCP Simulator should have the following features:
 4. Compatibility with Windows and Linux operating systems.
 5. Ability to set the designated field as the timestamp field for accurate time-based simulations. Supported formats: ISO 8601, epoch millis, epoch seconds (integer and fractional).
 6. Set the port for TCP/UDP communication (client and server).
-7. Allow the user to walk through the data one line at a time or send the lines automatically and loop back to the beginning.
+7. Allow the user to walk through the data one line at a time, jump to a specific line in step mode, or send the lines automatically and loop back to the beginning.
 8. Allow the user to choose the file they want to load data from for sending.
 9. Support both TCP and UDP protocols.
 10. GUI with file preview, transport controls, status panel, and on-demand JSON log load/refresh.
@@ -32,6 +32,7 @@ The TCP Simulator should have the following features:
 12. Backpressure handling: block and disconnect slow clients with GUI indicators.
 13. Header row: configurable whether to send to clients.
 14. Test strategy: mandatory automated unit, integration, and soak tests (reconnect storms, slow-client churn/backpressure, and large-file streaming/resource stability). Manual socket-tool checks are non-gating.
+15. Change send rate and input file without restarting the application.
 
 ## Architecture Principle
 The GUI must not contain business logic. The simulator engine must be fully functional without a GUI, communicating via an event/callback interface. This enables future CLI mode and testability.
