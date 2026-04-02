@@ -53,7 +53,7 @@ Our simulator in **Client mode** connects to Velocity's TCP Server feed to push 
 
 ### 1.2 Data Format Considerations
 
-**The simulator is format-agnostic.** It sends raw text lines terminated by a configurable record separator. The downstream consumer (Velocity) interprets the format.
+The simulator sends line-oriented text records terminated by a configurable record separator. The downstream consumer (Velocity) interprets payload semantics.
 
 Velocity supports these formats for TCP feeds:
 - Delimited (comma, pipe, semicolon, tab — our primary focus)
@@ -62,7 +62,7 @@ Velocity supports these formats for TCP feeds:
 - EsriJSON
 - XML
 
-Because our simulator reads a file and sends it line-by-line, it can serve any of these formats as long as the file contains properly formatted data with one record per line. The simulator does not parse or validate the data format itself — only column count consistency for delimited files.
+For this simulator MVP, requirements are defined for **delimited text inputs** (CSV/TSV/custom delimiter). Support for non-delimited payloads is not a guaranteed MVP behavior.
 
 ---
 
@@ -125,6 +125,7 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-01 | The application shall support **Server mode**: bind to a port, accept TCP connections, and broadcast data to all connected clients. | MVP |
 | FR-02 | The application shall support **Client mode**: connect to a remote host:port and transmit data. | MVP |
 | FR-03 | The user shall be able to switch between Server and Client modes via the GUI without restarting the application. | MVP |
+| FR-03a | If mode or protocol is changed while transport is active, the application shall execute a controlled stop/rebind transition (no abrupt task termination), then apply the new mode/protocol with explicit status updates in the GUI. | MVP |
 | FR-04 | The application shall support **TCP** and **UDP** protocols, selectable in the GUI. | MVP |
 | FR-04a | In server mode, the application shall gracefully handle clients that **connect and disconnect repeatedly** (e.g., Velocity's testConnection → sampleMessages → feed run lifecycle). Disconnections shall not interrupt transmission to other clients or cause errors. | MVP |
 
@@ -143,6 +144,7 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-12a | File indexing and validation shall run in a background task and shall not block GUI interaction. | MVP |
 | FR-12b | Users shall be able to start transmission before full-file indexing/validation completes. Progress and invalid-line counts shall be finalized when scanning completes. | MVP |
 | FR-12c | Delimited parsing shall support RFC 4180-style CSV semantics: quoted fields, escaped quotes, embedded delimiters, and embedded newlines. | MVP |
+| FR-12d | Transmission shall perform per-record delimiter/column validation before emit so invalid rows are discarded even if encountered before full background scan completion. | MVP |
 
 ### 3.3 Data Transmission
 
@@ -153,7 +155,7 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-15 | The GUI shall display both **features/s** and **KB/s** in real time during transmission. | MVP |
 | FR-16 | The application shall support **automatic mode**: continuously send lines at the configured rate. | MVP |
 | FR-17 | The application shall support **step mode**: send one line per user click (manual advance). | MVP |
-| FR-17a | In step mode, the user shall be able to **jump to a specific data line number** and send from that point. | MVP |
+| FR-17a | In step mode, the user shall be able to **jump to a specific 1-based data line number** (header excluded; discarded lines excluded from numbering) and send from that point. Out-of-range values shall be rejected with clear feedback. | MVP |
 | FR-18 | The application shall support **looping**: when EOF is reached, restart from the first data line. Looping is on by default in automatic mode. | MVP |
 | FR-19 | The application shall allow the user to **pause and resume** transmission without dropping connections. | MVP |
 | FR-20 | The GUI shall display the current line number, total lines, and a progress indicator during transmission. | MVP |
@@ -161,6 +163,8 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-20b | While paused due to zero connected clients, the transmission line pointer shall not advance. | MVP |
 | FR-20c | The user shall be able to **change send rate during active transmission** without restarting the application; the new rate shall take effect by the next scheduling interval. | MVP |
 | FR-20d | The user shall be able to **load/swap the input file without restarting**. If swap is applied while sending, the switch occurs at the next message boundary, resets to line 1 of the new file, and preserves active network connections. | MVP |
+| FR-20e | On file swap during active send, per-client output ordering shall remain generation-safe: a client must not receive interleaved records from old and new files. Default behavior is to drain queued old-file records before new-file records are emitted. | MVP |
+| FR-20f | If `send_header` is enabled and a file swap occurs during active send, currently connected clients shall receive the new file header once before the first new-file data record. | MVP |
 | FR-21 | Post-MVP: Support **original-rate mode** — send lines at the rate implied by the timestamp deltas in the original data. | Post-MVP |
 | FR-22 | Post-MVP: Support sending a **subset of lines** (start/end line, first N lines). | Post-MVP |
 
@@ -168,7 +172,7 @@ These answers were provided by the project owner and inform all requirements bel
 
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| FR-23 | The user shall be able to designate a field (by name from header, or by index) as the **timestamp field** via a GUI dropdown. | MVP |
+| FR-23 | The user shall be able to designate a field (by name from header, or by **1-based column index**) as the **timestamp field** via a GUI dropdown. | MVP |
 | FR-24 | The user shall be able to select the timestamp format from: **ISO 8601, epoch milliseconds, epoch seconds (integer), epoch seconds (fractional)**. | MVP |
 | FR-25 | When timestamp replacement is enabled, the application shall replace the original timestamp with a **current-time-based value** at send time, preserving the relative offset between consecutive rows. | MVP |
 | FR-26 | The user shall be able to **disable** timestamp replacement (send raw file data). | MVP |
@@ -195,7 +199,7 @@ These answers were provided by the project owner and inform all requirements bel
 |----|-------------|----------|
 | FR-35 | The application shall log all connection events (connect, disconnect, reconnect, slow client disconnect) in **JSON structured format**. | MVP |
 | FR-36 | The application shall log transmission statistics: features sent, bytes sent, elapsed time, current rate (feat/s and KB/s). | MVP |
-| FR-37 | The application shall write JSON logs to a configurable log file with **log rotation** (default: 10 MB max, configurable). | MVP |
+| FR-37 | The application shall write JSON logs to a configurable log file with **log rotation** (default: 10 MB max, configurable) and configurable retention count (default: 5 rotated files). | MVP |
 | FR-38 | The GUI shall provide an on-demand log panel that loads and refreshes JSON log entries only when the user clicks **Load** or **Refresh**. No automatic live tailing/streaming is required. | MVP |
 | FR-39 | Log verbosity shall be configurable (DEBUG, INFO, WARN, ERROR). | MVP |
 | FR-40 | Post-MVP: Dedicated on-demand log viewer UI component with filtering, search, and export. | Post-MVP |
@@ -234,7 +238,7 @@ These answers were provided by the project owner and inform all requirements bel
 | NFR-02 | The application shall **stream** files line-by-line. No file size limit; memory usage shall remain bounded regardless of file size. | MVP |
 | NFR-03 | The application shall support at least **50 simultaneous client connections** in server mode. | MVP |
 | NFR-04 | The application shall provide a **GUI** as its primary interface. The engine shall be decoupled to allow future CLI use. | MVP |
-| NFR-05 | The application shall be distributed as **source only** (clone + `pip install -r requirements.txt` + `python -m tcp_sim`). | MVP |
+| NFR-05 | The application shall be distributed as **source only** (clone + `pip install -e .` + `python -m tcp_sim`). | MVP |
 | NFR-06 | The application shall shut down gracefully on window close or SIGINT/SIGTERM, closing all connections cleanly. | MVP |
 | NFR-07 | The application shall not crash or hang when a client disconnects unexpectedly. | MVP |
 | NFR-08 | The GUI shall remain responsive during file loading, transmission, and high connection counts. All I/O shall be async. | MVP |
@@ -383,6 +387,8 @@ All connected clients receive the same line at the same time. A client that conn
 #### CSV Validation
 On file load, check column count consistency using CSV parsing rules that honor quoting and escaping semantics. Lines with inconsistent column counts are **discarded** (not sent) and logged with a warning. The GUI file preview should flag invalid lines.
 
+During transmission, validate each candidate row before emit so invalid rows discovered ahead of completed background scan are still discarded.
+
 #### File Reading Strategy
 Stream the file line-by-line using a buffered reader. Do not load the entire file into memory. For looping, seek back to the start of data (after header row, if any).
 
@@ -395,8 +401,10 @@ Use a progressive background scan for total-line and invalid-line accounting:
 Runtime file swap behavior:
 1. User selects and validates new file in background.
 2. On apply, perform atomic source switch at next message boundary.
-3. Reset active line pointer to first data line of new file.
-4. Keep active transport sessions connected.
+3. Preserve per-client generation ordering (no old/new interleaving within one client stream); default behavior is to drain old-file queued records first.
+4. If `send_header` is enabled, enqueue the new file header once for each currently connected client before first new-file data row.
+5. Reset active line pointer to first data line of new file.
+6. Keep active transport sessions connected.
 
 #### Backpressure & Slow Clients
 Use per-client outbound queues and watermarks. Default thresholds (configurable):
@@ -483,6 +491,7 @@ The config file stores all user-configurable settings:
   "client_queue_low_watermark_bytes": 131072,
   "client_queue_hard_cap_bytes": 524288,
   "log_rotation_max_bytes": 10485760,
+  "log_rotation_backup_count": 5,
   "udp_recipient_mode": "reply_to_senders",
   "udp_recipient_cache_ttl_seconds": 300,
   "udp_recipient_cache_max_entries": 256,
@@ -559,8 +568,8 @@ tcp-server-simulator/
 │       │   ├── __init__.py
 │       │   ├── tcp_server.py        # asyncio TCP server, broadcast, backpressure
 │       │   ├── tcp_client.py        # asyncio TCP client, auto-reconnect
-│       │   ├── udp_server.py        # asyncio UDP sender
-│       │   ├── udp_client.py        # asyncio UDP sender
+│       │   ├── udp_server.py        # asyncio UDP listener/sender (multicast or reply-to-senders)
+│       │   ├── udp_client.py        # asyncio UDP client sender
 │       │   └── connection_manager.py # Track clients, slow client detection
 │       ├── config/
 │       │   ├── __init__.py
