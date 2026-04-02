@@ -101,6 +101,10 @@ These answers were provided by the project owner and inform all requirements bel
 | RQ7 | Show discarded lines in preview | **Yes** — highlighted red, with total discarded count | Yes |
 | RQ8 | Remember last config on startup | **Yes** — auto-load last-used config | Yes |
 | RQ9 | Log rotation | **Configurable** with sensible default (10 MB) | Yes |
+| RQ10 | Server broadcast with zero subscribers | **Pause transmission** until at least one client is connected | Yes |
+| RQ11 | Connect/send timeout defaults | **10 seconds** each (configurable) | Yes |
+| RQ12 | UDP recipient cache defaults | TTL **300 seconds**, cap **256 recipients** (configurable) | Yes |
+| RQ13 | Config schema migration policy | **Hybrid**: migrate known older versions; invalidate unknown/incompatible versions and load defaults with warning | Yes |
 
 ---
 
@@ -141,6 +145,7 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-18 | The application shall support **looping**: when EOF is reached, restart from the first data line. Looping is on by default in automatic mode. | MVP |
 | FR-19 | The application shall allow the user to **pause and resume** transmission without dropping connections. | MVP |
 | FR-20 | The GUI shall display the current line number, total lines, and a progress indicator during transmission. | MVP |
+| FR-20a | In server broadcast mode, automatic transmission shall **pause when zero clients are connected** and resume when at least one client reconnects. | MVP |
 | FR-21 | Post-MVP: Support **original-rate mode** — send lines at the rate implied by the timestamp deltas in the original data. | Post-MVP |
 | FR-22 | Post-MVP: Support sending a **subset of lines** (start/end line, first N lines). | Post-MVP |
 
@@ -163,7 +168,7 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-30 | In server mode, the application shall allow configuring the **bind address** (default: `0.0.0.0`). | MVP |
 | FR-31 | In TCP client mode, the application shall **auto-reconnect** on disconnect with exponential backoff. The GUI shall display reconnect status and total reconnect count. | MVP |
 | FR-32 | In TCP server mode, the application shall monitor per-client write buffers and **disconnect slow clients** that cannot keep up. The GUI shall display blocking status and which clients were disconnected. | MVP |
-| FR-33 | The application shall support configurable **connection timeout** and **send timeout** values. | MVP |
+| FR-33 | The application shall support configurable **connection timeout** and **send timeout** values, both defaulting to **10 seconds**. | MVP |
 | FR-34 | Post-MVP: Optional **TLS/SSL** support with certificate configuration. | Post-MVP |
 
 ### 3.6 Logging & Reporting
@@ -185,6 +190,8 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-42 | The application shall support loading a previously saved JSON configuration file, populating all GUI fields. | MVP |
 | FR-43 | The application shall provide sensible defaults for all configuration values. | MVP |
 | FR-44 | The application shall **auto-load the last-used configuration** on startup. | MVP |
+| FR-45 | Configuration files shall include an integer **schema_version** field. | MVP |
+| FR-46 | On config load, the application shall migrate known older schema versions; unknown or incompatible versions shall be rejected and replaced with defaults while preserving the original file and surfacing a clear warning. | MVP |
 
 ---
 
@@ -310,7 +317,7 @@ The recommended pattern is a **controller** layer that bridges the GUI thread an
 Both TCP and UDP are supported. UDP has no concept of "connections" so:
 - **UDP Server mode:** Two recipient discovery options, user-selectable in the GUI:
   - **Multicast:** Send datagrams to a configured multicast group address.
-  - **Reply to senders:** Send datagrams to all addresses that have previously sent a packet to our listen port. Track stale addresses with a configurable expiry.
+  - **Reply to senders:** Send datagrams to all addresses that have previously sent a packet to our listen port. Default recipient cache TTL is **300 seconds** with a cap of **256 entries**; both values are configurable.
 - **UDP Client mode:** Send datagrams to a configured host:port. No connection, no reconnect logic needed.
 
 UDP mode should clearly indicate in the UI that delivery is not guaranteed.
@@ -325,6 +332,7 @@ All connected clients receive the same line at the same time. A client that conn
 - Accept and cleanly release connections without error messages cluttering the log
 - Continue broadcasting to remaining clients when one disconnects
 - Optionally re-send the header row to newly connected clients (if "send header" is enabled)
+- Pause automatic broadcast progression while zero clients are connected; resume when a client reconnects
 - Not reset the line position when a client disconnects and reconnects
 - Log connect/disconnect events at INFO level (not WARN/ERROR — these are expected)
 
@@ -381,6 +389,7 @@ The config file stores all user-configurable settings:
 
 ```json
 {
+  "schema_version": 1,
   "mode": "server",
   "protocol": "tcp",
   "host": "0.0.0.0",
@@ -397,14 +406,27 @@ The config file stores all user-configurable settings:
   "line_ending": "\n",
   "log_file": "tcp-sim.log",
   "log_level": "INFO",
+  "connect_timeout_seconds": 10,
+  "send_timeout_seconds": 10,
   "slow_client_timeout_seconds": 10,
   "reconnect_max_backoff_seconds": 30,
   "log_rotation_max_bytes": 10485760,
-  "udp_recipient_mode": "reply_to_senders"
+  "udp_recipient_mode": "reply_to_senders",
+  "udp_recipient_cache_ttl_seconds": 300,
+  "udp_recipient_cache_max_entries": 256
 }
 ```
 
 The GUI is the primary interface. All settings are configurable through the GUI. A future CLI mode could consume the same JSON config files.
+
+#### 5.4.1 Config Migration Policy
+Config compatibility follows a hybrid policy designed for safety and convenience in a standalone tool:
+
+1. If `schema_version` matches the current version, load normally.
+2. If the file is from an older known schema version, apply deterministic in-memory migration steps and continue.
+3. If migration fails, or if the version is unknown/newer/incompatible, reject the file, preserve it unchanged on disk, load defaults, and surface a clear warning in GUI and logs.
+
+The application should never silently mutate or overwrite an incompatible config file.
 
 ### 5.5 Proposed Project Structure
 
@@ -517,7 +539,7 @@ The following gaps from the original copilot-instructions have been resolved in 
 
 ## 8. Resolved Open Questions
 
-All design questions have been resolved. See Section 2 for the complete decision log including RQ1–RQ9.
+All design questions have been resolved. See Section 2 for the complete decision log including RQ1–RQ13.
 
 ---
 
@@ -527,7 +549,7 @@ All design questions have been resolved. See Section 2 for the complete decision
 
 | Phase | Scope | Notes |
 |-------|-------|-------|
-| **Phase 1: Foundation** | Project structure, config schema, JSON config load/save, streaming file reader with validation, unit tests | No GUI, no networking yet. Just the engine core. |
+| **Phase 1: Foundation** | Project structure, config schema + schema versioning/migration, JSON config load/save, streaming file reader with validation, unit tests | No GUI, no networking yet. Just the engine core. |
 | **Phase 2: Transport** | TCP server (broadcast), TCP client (with auto-reconnect), UDP server, UDP client, connection manager with backpressure/slow client detection | Test with netcat/telnet. No GUI yet. |
 | **Phase 3: Scheduler** | Rate control (features/s), step mode, auto mode, loop mode, pause/resume, timestamp rewriting (ISO 8601, epoch millis, epoch seconds) | Integrates engine + transport. Testable via scripts. |
 | **Phase 4: GUI** | Main window, config panel, file browser + preview, transport controls (start/stop/pause/step), status panel (connections, rate, progress, blocking), live log panel, config save/load | Full GUI wired to engine. This is the MVP delivery. |
