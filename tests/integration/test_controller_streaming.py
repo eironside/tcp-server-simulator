@@ -108,3 +108,55 @@ def test_controller_server_mode_velocity_lifecycle_sampling(tmp_path) -> None:
         assert all(payloads)
     finally:
         controller.shutdown()
+
+
+@pytest.mark.integration
+def test_controller_server_mode_can_strip_lf_and_cr(tmp_path) -> None:
+    data_path = tmp_path / "records_crlf.csv"
+    data_path.write_bytes(b"id,value\r\n1,a\r\n2,b\r\n")
+
+    port = _reserve_tcp_port()
+    controller = SimulatorController()
+
+    try:
+        controller.start_transmission(
+            RuntimeSettings(
+                mode="server",
+                protocol="tcp",
+                host="127.0.0.1",
+                port=port,
+                send_timeout_seconds=1.0,
+            ),
+            StreamSettings(
+                file_path=str(data_path),
+                delimiter=",",
+                has_header=True,
+                send_header=True,
+                rate_features_per_second=20.0,
+                loop=True,
+                strip_lf=True,
+                strip_cr=True,
+            ),
+        )
+
+        assert _wait_for_status(controller, "Transmission started", timeout_seconds=3.0)
+
+        received = b""
+        deadline = time.monotonic() + 3.0
+        with socket.create_connection(("127.0.0.1", port), timeout=2.0) as client:
+            client.settimeout(0.3)
+            while time.monotonic() < deadline and b"1,a" not in received:
+                try:
+                    chunk = client.recv(4096)
+                except TimeoutError:
+                    continue
+                if not chunk:
+                    break
+                received += chunk
+
+        assert received
+        assert b"\n" not in received
+        assert b"\r" not in received
+        assert b"id,value" in received
+    finally:
+        controller.shutdown()

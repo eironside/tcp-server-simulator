@@ -101,6 +101,8 @@ class App:
             delimiter=self.file_panel.delimiter_var.get() or ",",
             has_header=self.file_panel.has_header_var.get(),
             send_header=self.file_panel.send_header_var.get(),
+            strip_lf=self.file_panel.strip_lf_var.get(),
+            strip_cr=self.file_panel.strip_cr_var.get(),
         )
         self.status_panel.append_event(f"File swap requested: {path}")
 

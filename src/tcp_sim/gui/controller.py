@@ -46,6 +46,8 @@ class StreamSettings:
     rate_features_per_second: float = 10.0
     loop: bool = True
     line_ending: str = "\n"
+    strip_lf: bool = False
+    strip_cr: bool = False
 
 
 class SimulatorController:
@@ -256,6 +258,8 @@ class SimulatorController:
         has_header: bool,
         send_header: bool,
         line_ending: str = "\n",
+        strip_lf: bool = False,
+        strip_cr: bool = False,
     ) -> None:
         if self._stream_settings is None:
             self._emit("Cannot swap file before transmission has been started.")
@@ -268,6 +272,8 @@ class SimulatorController:
             has_header=has_header,
             send_header=send_header,
             line_ending=line_ending,
+            strip_lf=strip_lf,
+            strip_cr=strip_cr,
         )
         self._loop.call_soon_threadsafe(self._swap_file, updated)
 
@@ -494,12 +500,30 @@ class SimulatorController:
             raise ValueError(f"Data file not found: {normalized_path}")
 
         records = [row.raw_text.encode("utf-8") for row in reader.iter_valid_raw_rows()]
+        records = [
+            self._apply_payload_filters(payload, stream_settings) for payload in records
+        ]
 
         header_payload: bytes | None = None
         if stream_settings.send_header and reader.header_raw is not None:
-            header_payload = reader.header_raw.encode("utf-8")
+            header_payload = self._apply_payload_filters(
+                reader.header_raw.encode("utf-8"),
+                stream_settings,
+            )
 
         return records, header_payload
+
+    def _apply_payload_filters(
+        self,
+        payload: bytes,
+        stream_settings: StreamSettings,
+    ) -> bytes:
+        filtered = payload
+        if stream_settings.strip_cr:
+            filtered = filtered.replace(b"\r", b"")
+        if stream_settings.strip_lf:
+            filtered = filtered.replace(b"\n", b"")
+        return filtered
 
     def _on_transport_event(self, event: dict[str, object]) -> None:
         name = str(event.get("event", ""))
