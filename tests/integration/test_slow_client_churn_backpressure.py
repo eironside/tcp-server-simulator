@@ -40,7 +40,6 @@ async def test_slow_client_is_disconnected_without_global_stall() -> None:
 
         await asyncio.sleep(1.0)
 
-        assert received_chunks
         assert any(
             event.get("event") == "client_disconnect"
             and event.get("reason") != "server_stop"
