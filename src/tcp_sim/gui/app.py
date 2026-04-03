@@ -19,7 +19,7 @@ class App:
     def __init__(self) -> None:
         self.root = tk.Tk()
         self.root.title("TCP Server Simulator")
-        self.controller = SimulatorController()
+        self.controller: SimulatorController = SimulatorController()
 
         container = ttk.Frame(self.root, padding=8)
         container.pack(fill="both", expand=True)
@@ -46,6 +46,7 @@ class App:
         self.control_panel.on_jump = self._on_jump
         self.control_panel.on_rate_change = self._on_rate_change
         self.control_panel.on_swap_file = self._on_swap_file
+        self.control_panel.on_line_controls = self._on_line_controls
 
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
         self.root.after(100, self._poll_controller_status)
@@ -63,10 +64,14 @@ class App:
         self.status_panel.append_event("Stop requested.")
 
     def _on_pause(self) -> None:
-        self.status_panel.append_event("Pause requested (scheduler wiring in next increment).")
+        self.status_panel.append_event(
+            "Pause requested (scheduler wiring in next increment)."
+        )
 
     def _on_step(self) -> None:
-        self.status_panel.append_event("Step requested (scheduler wiring in next increment).")
+        self.status_panel.append_event(
+            "Step requested (scheduler wiring in next increment)."
+        )
 
     def _on_jump(self, line_number: int) -> None:
         self.status_panel.append_event(f"Jump requested to line {line_number}.")
@@ -77,6 +82,18 @@ class App:
 
     def _on_swap_file(self, path: str) -> None:
         self.status_panel.append_event(f"File swap requested: {path}")
+
+    def _on_line_controls(
+        self,
+        start_line: int | None,
+        end_line: int | None,
+        first_n: int | None,
+    ) -> None:
+        self.controller.set_line_controls(start_line, end_line, first_n)
+        self.status_panel.append_event(
+            "Line controls requested: "
+            f"start={start_line}, end={end_line}, first_n={first_n}"
+        )
 
     def _poll_controller_status(self) -> None:
         for message in self.controller.read_status_messages():

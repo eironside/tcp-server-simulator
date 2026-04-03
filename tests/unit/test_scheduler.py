@@ -1,5 +1,6 @@
-import pytest
 import asyncio
+
+import pytest
 
 from tcp_sim.engine.scheduler import ScheduledMessage, SendScheduler
 
@@ -55,9 +56,36 @@ def test_scheduler_file_swap_increments_generation_and_emits_header() -> None:
 
 
 @pytest.mark.unit
+def test_scheduler_line_controls_start_end_and_first_n() -> None:
+    scheduler = SendScheduler(records=[b"1", b"2", b"3", b"4"], loop=False)
+    scheduler.set_line_controls(start_line=2, end_line=4, first_n=2)
+
+    one = scheduler.step()
+    two = scheduler.step()
+    three = scheduler.step()
+
+    assert one is not None and one.payload == b"2"
+    assert two is not None and two.payload == b"3"
+    assert three is None
+
+
+@pytest.mark.unit
+def test_scheduler_invalid_line_controls_raise() -> None:
+    scheduler = SendScheduler(records=[b"1"], loop=False)
+
+    with pytest.raises(ValueError):
+        scheduler.set_line_controls(start_line=0)
+
+    with pytest.raises(ValueError):
+        scheduler.set_line_controls(start_line=2, end_line=1)
+
+
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_scheduler_auto_mode_sends_messages() -> None:
-    scheduler = SendScheduler(records=[b"a", b"b"], rate_features_per_second=100.0, loop=False)
+    scheduler = SendScheduler(
+        records=[b"a", b"b"], rate_features_per_second=100.0, loop=False
+    )
     sent: list[ScheduledMessage] = []
 
     async def callback(message: ScheduledMessage) -> None:
@@ -67,4 +95,5 @@ async def test_scheduler_auto_mode_sends_messages() -> None:
         await asyncio.sleep(0)
 
     await scheduler.run_auto(callback)
+    assert [item.payload for item in sent] == [b"a", b"b"]
     assert [item.payload for item in sent] == [b"a", b"b"]

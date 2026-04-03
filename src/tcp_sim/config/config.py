@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -24,6 +24,9 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "timestamp_field": 3,
     "timestamp_format": "iso8601",
     "replace_timestamp": True,
+    "start_line": None,
+    "end_line": None,
+    "first_n_lines": None,
     "line_ending": "\n",
     "log_file": "tcp-sim.log",
     "log_level": "INFO",
@@ -73,7 +76,10 @@ def _migrate_v0_to_v1(raw: dict[str, Any]) -> dict[str, Any]:
     if "rate_fps" in migrated and "rate_features_per_second" not in migrated:
         migrated["rate_features_per_second"] = migrated.pop("rate_fps")
 
-    if "max_reconnect_backoff_seconds" in migrated and "reconnect_max_backoff_seconds" not in migrated:
+    if (
+        "max_reconnect_backoff_seconds" in migrated
+        and "reconnect_max_backoff_seconds" not in migrated
+    ):
         migrated["reconnect_max_backoff_seconds"] = migrated.pop(
             "max_reconnect_backoff_seconds"
         )
@@ -82,7 +88,9 @@ def _migrate_v0_to_v1(raw: dict[str, Any]) -> dict[str, Any]:
     return _normalize_config(migrated)
 
 
-def migrate_config(raw: dict[str, Any]) -> tuple[dict[str, Any], list[str], bool, int | None]:
+def migrate_config(
+    raw: dict[str, Any],
+) -> tuple[dict[str, Any], list[str], bool, int | None]:
     warnings: list[str] = []
 
     version_value = raw.get("schema_version", 0)
@@ -138,7 +146,9 @@ def load_config_file(path: str | Path) -> ConfigLoadResult:
         )
 
     try:
-        migrated_config, warnings, migrated, source_version = migrate_config(raw_payload)
+        migrated_config, warnings, migrated, source_version = migrate_config(
+            raw_payload
+        )
     except ConfigError as exc:
         return ConfigLoadResult(
             config=load_default_config(),

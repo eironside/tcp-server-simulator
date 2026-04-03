@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import threading
 from dataclasses import dataclass
 from queue import Queue
-import threading
 from typing import Any
 
 from tcp_sim.transport.tcp_client import TcpClient, TcpClientConfig
@@ -36,6 +36,11 @@ class SimulatorController:
         self._status_queue: Queue[str] = Queue()
         self._active_transport: Any = None
         self._active_settings: RuntimeSettings | None = None
+        self._line_controls: tuple[int | None, int | None, int | None] = (
+            None,
+            None,
+            None,
+        )
 
     def _run_loop(self) -> None:
         asyncio.set_event_loop(self._loop)
@@ -51,20 +56,24 @@ class SimulatorController:
         self._status_queue.put(message)
 
     def apply_settings(self, settings: RuntimeSettings) -> None:
-        asyncio.run_coroutine_threadsafe(self._apply_settings_async(settings), self._loop)
+        asyncio.run_coroutine_threadsafe(
+            self._apply_settings_async(settings), self._loop
+        )
 
     async def _apply_settings_async(self, settings: RuntimeSettings) -> None:
         if self._active_transport is not None:
             self._emit("Applying controlled stop/rebind transition...")
             await self._stop_transport_async()
 
-        self._active_transport = await self._build_transport(settings)
+        self._active_transport = self._build_transport(settings)
         self._active_settings = settings
 
         await self._active_transport.start()
-        self._emit(f"Transport started: {settings.mode}/{settings.protocol} on {settings.host}:{settings.port}")
+        self._emit(
+            f"Transport started: {settings.mode}/{settings.protocol} on {settings.host}:{settings.port}"
+        )
 
-    async def _build_transport(self, settings: RuntimeSettings) -> Any:
+    def _build_transport(self, settings: RuntimeSettings) -> Any:
         mode = settings.mode.lower()
         protocol = settings.protocol.lower()
 
@@ -105,6 +114,18 @@ class SimulatorController:
     def stop_transport(self) -> None:
         asyncio.run_coroutine_threadsafe(self._stop_transport_async(), self._loop)
 
+    def set_line_controls(
+        self,
+        start_line: int | None,
+        end_line: int | None,
+        first_n: int | None,
+    ) -> None:
+        self._line_controls = (start_line, end_line, first_n)
+        self._emit(
+            "Line controls updated "
+            f"(start={start_line}, end={end_line}, first_n={first_n})."
+        )
+
     async def _stop_transport_async(self) -> None:
         if self._active_transport is None:
             return
@@ -114,7 +135,9 @@ class SimulatorController:
         self._active_transport = None
 
     def shutdown(self) -> None:
-        future = asyncio.run_coroutine_threadsafe(self._stop_transport_async(), self._loop)
+        future = asyncio.run_coroutine_threadsafe(
+            self._stop_transport_async(), self._loop
+        )
         future.result(timeout=3)
         self._loop.call_soon_threadsafe(self._loop.stop)
         self._loop_thread.join(timeout=3)

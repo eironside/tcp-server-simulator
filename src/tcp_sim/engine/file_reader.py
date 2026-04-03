@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import csv
-from pathlib import Path
 import threading
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Iterator
 
 
@@ -83,6 +83,37 @@ class FileReader:
             self._expected_columns = len(row)
             return True
         return len(row) == self._expected_columns
+
+    @staticmethod
+    def _validate_line_controls(
+        start_line: int | None,
+        end_line: int | None,
+        first_n: int | None,
+    ) -> None:
+        if start_line is not None and start_line < 1:
+            raise ValueError("start_line must be >= 1")
+        if end_line is not None and end_line < 1:
+            raise ValueError("end_line must be >= 1")
+        if first_n is not None and first_n < 1:
+            raise ValueError("first_n must be >= 1")
+        if (
+            start_line is not None
+            and end_line is not None
+            and end_line < start_line
+        ):
+            raise ValueError("end_line must be >= start_line")
+
+    @staticmethod
+    def _line_is_selected(
+        line_number: int,
+        start_line: int | None,
+        end_line: int | None,
+    ) -> bool:
+        if start_line is not None and line_number < start_line:
+            return False
+        if end_line is not None and line_number > end_line:
+            return False
+        return True
 
     def _reset_scan_state(self) -> None:
         with self._scan_lock:
@@ -211,9 +242,17 @@ class FileReader:
 
         return preview
 
-    def iter_valid_rows(self) -> Iterator[RowRecord]:
+    def iter_valid_rows(
+        self,
+        start_line: int | None = None,
+        end_line: int | None = None,
+        first_n: int | None = None,
+    ) -> Iterator[RowRecord]:
+        self._validate_line_controls(start_line, end_line, first_n)
+
         self._reset_scan_state()
         data_line_number = 0
+        emitted = 0
 
         for _, row in self._iter_rows():
             if self._has_header and self._header is None:
@@ -225,4 +264,14 @@ class FileReader:
                 continue
 
             data_line_number += 1
+
+            if not self._line_is_selected(data_line_number, start_line, end_line):
+                if end_line is not None and data_line_number > end_line:
+                    break
+                continue
+
+            if first_n is not None and emitted >= first_n:
+                break
+
+            emitted += 1
             yield RowRecord(data_line_number=data_line_number, fields=row)

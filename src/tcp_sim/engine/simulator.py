@@ -8,7 +8,6 @@ from typing import Awaitable, Callable, Sequence
 
 from .scheduler import ScheduledMessage, SendScheduler
 
-
 SendCallback = Callable[[ScheduledMessage], Awaitable[None]]
 
 
@@ -47,7 +46,9 @@ class SimulatorEngine:
         if self._send_callback is None:
             raise RuntimeError("send_callback is not configured")
 
-        self._run_task = asyncio.create_task(self.scheduler.run_auto(self._on_scheduled_message))
+        self._run_task = asyncio.create_task(
+            self.scheduler.run_auto(self._on_scheduled_message)
+        )
         await asyncio.sleep(0)
 
     async def stop(self) -> None:
@@ -72,7 +73,21 @@ class SimulatorEngine:
     def update_rate(self, rate_features_per_second: float) -> None:
         self.scheduler.set_rate(rate_features_per_second)
 
-    def swap_records(self, new_records: Sequence[bytes], header_payload: bytes | None = None) -> None:
+    def set_line_controls(
+        self,
+        start_line: int | None = None,
+        end_line: int | None = None,
+        first_n: int | None = None,
+    ) -> None:
+        self.scheduler.set_line_controls(
+            start_line=start_line,
+            end_line=end_line,
+            first_n=first_n,
+        )
+
+    def swap_records(
+        self, new_records: Sequence[bytes], header_payload: bytes | None = None
+    ) -> None:
         self.scheduler.request_file_swap(new_records, header_payload=header_payload)
 
     async def _on_scheduled_message(self, message: ScheduledMessage) -> None:

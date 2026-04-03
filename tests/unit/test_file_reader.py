@@ -57,9 +57,7 @@ def test_file_reader_iter_valid_rows_enforces_column_consistency(tmp_path) -> No
 def test_file_reader_supports_rfc_4180_quoted_fields(tmp_path) -> None:
     data_path = tmp_path / "quoted.csv"
     data_path.write_text(
-        "id,text\n"
-        "1,\"hello,world\"\n"
-        "2,\"multi\nline\"\n",
+        "id,text\n1,\"hello,world\"\n2,\"multi\nline\"\n",
         encoding="utf-8",
     )
 
@@ -85,3 +83,31 @@ def test_file_reader_background_scan_completes(tmp_path) -> None:
     snapshot = reader.get_scan_snapshot()
     assert snapshot.completed is True
     assert snapshot.valid_rows == 2
+
+
+@pytest.mark.unit
+def test_file_reader_iter_valid_rows_with_line_controls(tmp_path) -> None:
+    data_path = tmp_path / "data.csv"
+    data_path.write_text(
+        "id,value\n1,a\n2,b\n3,c\n4,d\n",
+        encoding="utf-8",
+    )
+
+    reader = FileReader(data_path, delimiter=",", has_header=True)
+    rows = list(reader.iter_valid_rows(start_line=2, end_line=4, first_n=2))
+
+    assert [row.data_line_number for row in rows] == [2, 3]
+    assert [row.fields for row in rows] == [["2", "b"], ["3", "c"]]
+
+
+@pytest.mark.unit
+def test_file_reader_iter_valid_rows_invalid_line_controls(tmp_path) -> None:
+    data_path = tmp_path / "data.csv"
+    data_path.write_text("id,value\n1,a\n", encoding="utf-8")
+    reader = FileReader(data_path, delimiter=",", has_header=True)
+
+    with pytest.raises(ValueError):
+        list(reader.iter_valid_rows(start_line=0))
+
+    with pytest.raises(ValueError):
+        list(reader.iter_valid_rows(start_line=2, end_line=1))

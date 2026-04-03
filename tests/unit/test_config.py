@@ -12,6 +12,9 @@ from tcp_sim.config.config import (
 def test_default_config_contains_schema_version() -> None:
     cfg = load_default_config()
     assert cfg["schema_version"] == CURRENT_SCHEMA_VERSION
+    assert cfg["start_line"] is None
+    assert cfg["end_line"] is None
+    assert cfg["first_n_lines"] is None
 
 
 @pytest.mark.unit
