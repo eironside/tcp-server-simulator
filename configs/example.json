@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "mode": "server",
+  "protocol": "tcp",
+  "host": "0.0.0.0",
+  "port": 5565,
+  "file": "data/sample.csv",
+  "delimiter": ",",
+  "has_header": true,
+  "send_header": true,
+  "rate_features_per_second": 10,
+  "loop": true,
+  "replace_timestamp": true,
+  "log_file": "tcp-sim.log",
+  "log_level": "INFO"
+}

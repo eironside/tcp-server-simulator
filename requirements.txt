@@ -1,0 +1,3 @@
+# Runtime dependencies are stdlib-only for MVP.
+# Install the project in editable mode:
+#   pip install -e .
