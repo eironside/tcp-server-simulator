@@ -34,7 +34,9 @@ class ControlPanel(ttk.LabelFrame):
         self.on_jump: Callable[[int], None] | None = None
         self.on_rate_change: Callable[[float], None] | None = None
         self.on_swap_file: Callable[[str], None] | None = None
-        self.on_line_controls: Callable[[int | None, int | None, int | None], None] = _noop_line_controls
+        self.on_line_controls: Callable[[int | None, int | None, int | None], None] = (
+            _noop_line_controls
+        )
 
         ttk.Label(self, text="Rate (feat/s)").grid(
             row=0, column=0, sticky="w", padx=4, pady=2

@@ -136,10 +136,16 @@ class LogPanel(ttk.LabelFrame):
         destination = filedialog.asksaveasfilename(
             title="Export filtered log entries",
             defaultextension=".log",
-            filetypes=[("Log files", "*.log"), ("Text files", "*.txt"), ("All files", "*.*")],
+            filetypes=[
+                ("Log files", "*.log"),
+                ("Text files", "*.txt"),
+                ("All files", "*.*"),
+            ],
         )
         if not destination:
             return
 
         export_log_lines(self._filtered_lines, Path(destination))
-        self.text.insert(tk.END, f"Exported {len(self._filtered_lines)} lines to {destination}\n")
+        self.text.insert(
+            tk.END, f"Exported {len(self._filtered_lines)} lines to {destination}\n"
+        )

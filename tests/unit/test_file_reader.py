@@ -57,7 +57,7 @@ def test_file_reader_iter_valid_rows_enforces_column_consistency(tmp_path) -> No
 def test_file_reader_supports_rfc_4180_quoted_fields(tmp_path) -> None:
     data_path = tmp_path / "quoted.csv"
     data_path.write_text(
-        "id,text\n1,\"hello,world\"\n2,\"multi\nline\"\n",
+        'id,text\n1,"hello,world"\n2,"multi\nline"\n',
         encoding="utf-8",
     )
 

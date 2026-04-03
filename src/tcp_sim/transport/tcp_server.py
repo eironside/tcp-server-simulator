@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
 import ssl
+from dataclasses import dataclass
 from typing import Callable
 
 from .connection_manager import ConnectionManager, QueueThresholds

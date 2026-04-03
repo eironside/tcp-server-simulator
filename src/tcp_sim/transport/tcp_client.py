@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import ssl
 from contextlib import suppress
 from dataclasses import dataclass
-import ssl
 from typing import Callable
 
 EventCallback = Callable[[dict[str, object]], None]
@@ -106,9 +106,9 @@ class TcpClient:
                         self.config.host,
                         self.config.port,
                         ssl=ssl_context,
-                        server_hostname=tls_server_hostname
-                        if ssl_context is not None
-                        else None,
+                        server_hostname=(
+                            tls_server_hostname if ssl_context is not None else None
+                        ),
                     ),
                     timeout=self.config.connect_timeout_seconds,
                 )

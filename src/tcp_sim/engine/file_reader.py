@@ -96,11 +96,7 @@ class FileReader:
             raise ValueError("end_line must be >= 1")
         if first_n is not None and first_n < 1:
             raise ValueError("first_n must be >= 1")
-        if (
-            start_line is not None
-            and end_line is not None
-            and end_line < start_line
-        ):
+        if start_line is not None and end_line is not None and end_line < start_line:
             raise ValueError("end_line must be >= start_line")
 
     @staticmethod
