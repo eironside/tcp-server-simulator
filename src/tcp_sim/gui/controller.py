@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import asyncio
 import csv
-import io
 import threading
 import time
 from dataclasses import dataclass, replace
 from pathlib import Path
 from queue import Queue
-from typing import Any, Sequence
+from typing import Any
 
 from tcp_sim.engine.file_reader import FileReader
 from tcp_sim.engine.scheduler import ScheduledMessage
@@ -494,38 +493,13 @@ class SimulatorController:
         if not reader.is_ready:
             raise ValueError(f"Data file not found: {normalized_path}")
 
-        records = [
-            self._serialize_fields(
-                row.fields,
-                delimiter=stream_settings.delimiter or ",",
-                line_ending=stream_settings.line_ending,
-            )
-            for row in reader.iter_valid_rows()
-        ]
+        records = [row.raw_text.encode("utf-8") for row in reader.iter_valid_raw_rows()]
 
         header_payload: bytes | None = None
-        if stream_settings.send_header and reader.header:
-            header_payload = self._serialize_fields(
-                reader.header,
-                delimiter=stream_settings.delimiter or ",",
-                line_ending=stream_settings.line_ending,
-            )
+        if stream_settings.send_header and reader.header_raw is not None:
+            header_payload = reader.header_raw.encode("utf-8")
 
         return records, header_payload
-
-    def _serialize_fields(
-        self,
-        fields: Sequence[str],
-        delimiter: str,
-        line_ending: str,
-    ) -> bytes:
-        if not delimiter:
-            raise ValueError("Delimiter cannot be empty.")
-
-        buffer = io.StringIO()
-        writer = csv.writer(buffer, delimiter=delimiter, lineterminator=line_ending)
-        writer.writerow(list(fields))
-        return buffer.getvalue().encode("utf-8")
 
     def _on_transport_event(self, event: dict[str, object]) -> None:
         name = str(event.get("event", ""))

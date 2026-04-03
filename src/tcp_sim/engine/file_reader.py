@@ -16,6 +16,13 @@ class RowRecord:
 
 
 @dataclass(frozen=True)
+class RawRowRecord:
+    data_line_number: int
+    fields: list[str]
+    raw_text: str
+
+
+@dataclass(frozen=True)
 class PreviewRow:
     raw_row_number: int
     fields: list[str]
@@ -48,6 +55,7 @@ class FileReader:
         self._encoding = encoding
 
         self._header: list[str] | None = None
+        self._header_raw: str | None = None
         self._expected_columns: int | None = None
         self._scan_lock = threading.Lock()
         self._scan_thread: threading.Thread | None = None
@@ -69,14 +77,30 @@ class FileReader:
         return list(self._header) if self._header is not None else None
 
     @property
+    def header_raw(self) -> str | None:
+        return self._header_raw
+
+    @property
     def expected_columns(self) -> int | None:
         return self._expected_columns
 
-    def _iter_rows(self) -> Iterator[tuple[int, list[str]]]:
+    def _iter_rows_with_raw(self) -> Iterator[tuple[int, str, list[str]]]:
+        with self._file_path.open("r", encoding=self._encoding, newline="") as handle:
+            raw_lines = handle.readlines()
+
         with self._file_path.open("r", encoding=self._encoding, newline="") as handle:
             reader = csv.reader(handle, delimiter=self._delimiter)
-            for raw_row_number, row in enumerate(reader, start=1):
-                yield raw_row_number, row
+            consumed_lines = 0
+            for row in reader:
+                end_line = reader.line_num
+                raw_row_number = consumed_lines + 1
+                raw_text = "".join(raw_lines[consumed_lines:end_line])
+                consumed_lines = end_line
+                yield raw_row_number, raw_text, row
+
+    def _iter_rows(self) -> Iterator[tuple[int, list[str]]]:
+        for raw_row_number, _, row in self._iter_rows_with_raw():
+            yield raw_row_number, row
 
     def _is_valid_data_row(self, row: list[str]) -> bool:
         if self._expected_columns is None:
@@ -114,6 +138,7 @@ class FileReader:
     def _reset_scan_state(self) -> None:
         with self._scan_lock:
             self._header = None
+            self._header_raw = None
             self._expected_columns = None
             self._scan_snapshot = ScanSnapshot(
                 total_rows=0,
@@ -271,3 +296,42 @@ class FileReader:
 
             emitted += 1
             yield RowRecord(data_line_number=data_line_number, fields=row)
+
+    def iter_valid_raw_rows(
+        self,
+        start_line: int | None = None,
+        end_line: int | None = None,
+        first_n: int | None = None,
+    ) -> Iterator[RawRowRecord]:
+        self._validate_line_controls(start_line, end_line, first_n)
+
+        self._reset_scan_state()
+        data_line_number = 0
+        emitted = 0
+
+        for _, raw_text, row in self._iter_rows_with_raw():
+            if self._has_header and self._header is None:
+                self._header = row
+                self._header_raw = raw_text
+                self._expected_columns = len(row)
+                continue
+
+            if not self._is_valid_data_row(row):
+                continue
+
+            data_line_number += 1
+
+            if not self._line_is_selected(data_line_number, start_line, end_line):
+                if end_line is not None and data_line_number > end_line:
+                    break
+                continue
+
+            if first_n is not None and emitted >= first_n:
+                break
+
+            emitted += 1
+            yield RawRowRecord(
+                data_line_number=data_line_number,
+                fields=row,
+                raw_text=raw_text,
+            )

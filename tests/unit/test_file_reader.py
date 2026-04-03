@@ -111,3 +111,37 @@ def test_file_reader_iter_valid_rows_invalid_line_controls(tmp_path) -> None:
 
     with pytest.raises(ValueError):
         list(reader.iter_valid_rows(start_line=2, end_line=1))
+
+
+@pytest.mark.unit
+def test_file_reader_iter_valid_raw_rows_preserves_original_text(tmp_path) -> None:
+    data_path = tmp_path / "raw.csv"
+    data_path.write_text(
+        'Long,Lat,String,Timestamp\n-111.69334,33.27789048,"Loc,1",123456789\n',
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    reader = FileReader(data_path, delimiter=",", has_header=True)
+    rows = list(reader.iter_valid_raw_rows())
+
+    assert reader.header_raw == "Long,Lat,String,Timestamp\n"
+    assert len(rows) == 1
+    assert rows[0].raw_text == '-111.69334,33.27789048,"Loc,1",123456789\n'
+
+
+@pytest.mark.unit
+def test_file_reader_iter_valid_raw_rows_supports_multiline_records(tmp_path) -> None:
+    data_path = tmp_path / "multiline.csv"
+    data_path.write_text(
+        'id,text\n1,"multi\nline"\n2,ok\n',
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    reader = FileReader(data_path, delimiter=",", has_header=True)
+    rows = list(reader.iter_valid_raw_rows())
+
+    assert len(rows) == 2
+    assert rows[0].raw_text == '1,"multi\nline"\n'
+    assert rows[1].raw_text == "2,ok\n"
