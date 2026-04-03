@@ -5,8 +5,8 @@ from __future__ import annotations
 import asyncio
 from contextlib import suppress
 from dataclasses import dataclass
+import ssl
 from typing import Callable
-
 
 EventCallback = Callable[[dict[str, object]], None]
 
@@ -18,6 +18,29 @@ class TcpClientConfig:
     connect_timeout_seconds: float = 10.0
     send_timeout_seconds: float = 10.0
     reconnect_max_backoff_seconds: float = 30.0
+    use_tls: bool = False
+    tls_ca_file: str | None = None
+    tls_verify: bool = True
+    tls_server_hostname: str | None = None
+
+
+def create_client_ssl_context(config: TcpClientConfig) -> ssl.SSLContext | None:
+    if not config.use_tls:
+        return None
+
+    if not config.tls_verify:
+        raise ValueError("Insecure TLS mode is not supported; enable tls_verify")
+
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
+    context.check_hostname = True
+    context.verify_mode = ssl.CERT_REQUIRED
+    context.load_default_certs(ssl.Purpose.SERVER_AUTH)
+
+    if config.tls_ca_file:
+        context.load_verify_locations(config.tls_ca_file)
+
+    return context
 
 
 class TcpClient:
@@ -69,23 +92,42 @@ class TcpClient:
 
     async def _run(self) -> None:
         backoff = 1.0
+        ssl_context = create_client_ssl_context(self.config)
+        tls_server_hostname = (
+            self.config.tls_server_hostname
+            if self.config.tls_server_hostname
+            else self.config.host
+        )
 
         while self._running:
             try:
                 self._reader, self._writer = await asyncio.wait_for(
-                    asyncio.open_connection(self.config.host, self.config.port),
+                    asyncio.open_connection(
+                        self.config.host,
+                        self.config.port,
+                        ssl=ssl_context,
+                        server_hostname=tls_server_hostname
+                        if ssl_context is not None
+                        else None,
+                    ),
                     timeout=self.config.connect_timeout_seconds,
                 )
                 self.connected_event.set()
-                self._emit_event("client_connect", host=self.config.host, port=self.config.port)
+                self._emit_event(
+                    "client_connect", host=self.config.host, port=self.config.port
+                )
                 backoff = 1.0
 
                 await self._connected_loop()
             except OSError as exc:
                 self.last_disconnect_reason = str(exc)
-                self._emit_event("client_reconnect_pending", reason=str(exc), backoff=backoff)
+                self._emit_event(
+                    "client_reconnect_pending", reason=str(exc), backoff=backoff
+                )
             finally:
-                await self._close_connection(reason=self.last_disconnect_reason or "disconnect")
+                await self._close_connection(
+                    reason=self.last_disconnect_reason or "disconnect"
+                )
 
             if not self._running:
                 break

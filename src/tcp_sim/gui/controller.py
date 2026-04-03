@@ -23,6 +23,12 @@ class RuntimeSettings:
     connect_timeout_seconds: float = 10.0
     send_timeout_seconds: float = 10.0
     reconnect_max_backoff_seconds: float = 30.0
+    use_tls: bool = False
+    tls_certfile: str | None = None
+    tls_keyfile: str | None = None
+    tls_ca_file: str | None = None
+    tls_verify: bool = True
+    tls_server_hostname: str | None = None
 
 
 class SimulatorController:
@@ -84,6 +90,10 @@ class SimulatorController:
                     port=settings.port,
                     send_timeout_seconds=settings.send_timeout_seconds,
                     slow_client_timeout_seconds=settings.send_timeout_seconds,
+                    use_tls=settings.use_tls,
+                    tls_certfile=settings.tls_certfile,
+                    tls_keyfile=settings.tls_keyfile,
+                    tls_ca_file=settings.tls_ca_file,
                 )
             )
 
@@ -95,6 +105,10 @@ class SimulatorController:
                     connect_timeout_seconds=settings.connect_timeout_seconds,
                     send_timeout_seconds=settings.send_timeout_seconds,
                     reconnect_max_backoff_seconds=settings.reconnect_max_backoff_seconds,
+                    use_tls=settings.use_tls,
+                    tls_ca_file=settings.tls_ca_file,
+                    tls_verify=settings.tls_verify,
+                    tls_server_hostname=settings.tls_server_hostname,
                 )
             )
 

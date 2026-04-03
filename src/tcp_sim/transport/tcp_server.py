@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
+import ssl
 from typing import Callable
 
 from .connection_manager import ConnectionManager, QueueThresholds
-
 
 EventCallback = Callable[[dict[str, object]], None]
 
@@ -23,6 +23,33 @@ class TcpServerConfig:
     queue_hard_cap_bytes: int = 524288
     send_header_on_connect: bool = False
     header_payload: bytes | None = None
+    use_tls: bool = False
+    tls_certfile: str | None = None
+    tls_keyfile: str | None = None
+    tls_ca_file: str | None = None
+    tls_require_client_cert: bool = False
+
+
+def create_server_ssl_context(config: TcpServerConfig) -> ssl.SSLContext | None:
+    if not config.use_tls:
+        return None
+
+    if not config.tls_certfile or not config.tls_keyfile:
+        raise ValueError(
+            "TLS is enabled for TCP server but certfile/keyfile are not configured"
+        )
+
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
+    context.load_cert_chain(config.tls_certfile, config.tls_keyfile)
+
+    if config.tls_ca_file:
+        context.load_verify_locations(config.tls_ca_file)
+
+    if config.tls_require_client_cert:
+        context.verify_mode = ssl.CERT_REQUIRED
+
+    return context
 
 
 class TcpServer:
@@ -74,10 +101,13 @@ class TcpServer:
         if self._running:
             return
 
+        ssl_context = create_server_ssl_context(self.config)
+
         self._server = await asyncio.start_server(
             self._on_client_connected,
             host=self.config.host,
             port=self.config.port,
+            ssl=ssl_context,
         )
         sockets = self._server.sockets or []
         if sockets:
@@ -85,7 +115,9 @@ class TcpServer:
 
         self._running = True
         self._monitor_task = asyncio.create_task(self._monitor_slow_clients())
-        self._emit_event("server_started", host=self.config.host, port=self._listening_port)
+        self._emit_event(
+            "server_started", host=self.config.host, port=self._listening_port
+        )
 
     async def stop(self) -> None:
         if not self._running:
@@ -113,9 +145,13 @@ class TcpServer:
             return
 
         for client_id in self._connection_manager.list_client_ids():
-            accepted, reason = self._connection_manager.enqueue_payload(client_id, payload)
+            accepted, reason = self._connection_manager.enqueue_payload(
+                client_id, payload
+            )
             if not accepted:
-                await self._disconnect_client(client_id, reason=reason or "enqueue_failed")
+                await self._disconnect_client(
+                    client_id, reason=reason or "enqueue_failed"
+                )
 
     async def _on_client_connected(
         self,
@@ -135,7 +171,9 @@ class TcpServer:
                 client_id, self.config.header_payload
             )
             if not accepted:
-                await self._disconnect_client(client_id, reason=reason or "header_enqueue_failed")
+                await self._disconnect_client(
+                    client_id, reason=reason or "header_enqueue_failed"
+                )
                 return
 
         reader_task = asyncio.create_task(self._reader_loop(client_id, reader))
