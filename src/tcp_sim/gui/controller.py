@@ -423,12 +423,14 @@ class SimulatorController:
             return
 
         if isinstance(self._active_transport, TcpServer):
+            has_broadcast_clients = self._active_transport.has_broadcast_clients
+
             while self._engine is not None and self._engine.is_running:
-                if self._active_transport.has_clients():
+                if has_broadcast_clients():
                     break
                 await asyncio.sleep(0.05)
 
-            if not self._active_transport.has_clients():
+            if not has_broadcast_clients():
                 return
 
             await self._active_transport.broadcast(message.payload)

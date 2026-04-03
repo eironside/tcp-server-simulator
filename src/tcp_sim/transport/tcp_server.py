@@ -78,6 +78,7 @@ class TcpServer:
         self._listening_port = self.config.port
         self._send_header_on_connect = self.config.send_header_on_connect
         self._header_payload = self.config.header_payload
+        self._broadcast_ready_clients: set[str] = set()
         self.events: list[dict[str, object]] = []
 
     @property
@@ -90,6 +91,9 @@ class TcpServer:
 
     def has_clients(self) -> bool:
         return self.connected_client_count > 0
+
+    def has_broadcast_clients(self) -> bool:
+        return bool(self._broadcast_ready_clients)
 
     def queue_bytes_by_client(self) -> dict[str, int]:
         snapshot: dict[str, int] = {}
@@ -154,7 +158,7 @@ class TcpServer:
         if not payload:
             return
 
-        for client_id in self._connection_manager.list_client_ids():
+        for client_id in tuple(self._broadcast_ready_clients):
             accepted, reason = self._connection_manager.enqueue_payload(
                 client_id, payload
             )
@@ -186,14 +190,23 @@ class TcpServer:
                 )
                 return
 
+        self._broadcast_ready_clients.add(client_id)
+
         reader_task = asyncio.create_task(self._reader_loop(client_id, reader))
         self._reader_tasks[client_id] = reader_task
-        await reader_task
+        try:
+            await reader_task
+        except (OSError, asyncio.CancelledError):
+            # Expected in churn scenarios (for example, Velocity test/sample disconnects).
+            pass
 
     async def _reader_loop(self, client_id: str, reader: asyncio.StreamReader) -> None:
         try:
             while self._running:
-                data = await reader.read(1024)
+                try:
+                    data = await reader.read(1024)
+                except OSError:
+                    break
                 if not data:
                     break
         finally:
@@ -232,6 +245,8 @@ class TcpServer:
         state = self._connection_manager.get_client_state(client_id)
         if state is None:
             return
+
+        self._broadcast_ready_clients.discard(client_id)
 
         writer_task = self._writer_tasks.pop(client_id, None)
         if writer_task is not None and writer_task is not asyncio.current_task():
