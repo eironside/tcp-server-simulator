@@ -79,6 +79,7 @@ class TcpServer:
         self._send_header_on_connect = self.config.send_header_on_connect
         self._header_payload = self.config.header_payload
         self._broadcast_ready_clients: set[str] = set()
+        self._broadcast_ready_event = asyncio.Event()
         self.events: list[dict[str, object]] = []
 
     @property
@@ -94,6 +95,11 @@ class TcpServer:
 
     def has_broadcast_clients(self) -> bool:
         return bool(self._broadcast_ready_clients)
+
+    async def wait_for_broadcast_clients(self) -> None:
+        if self.has_broadcast_clients():
+            return
+        await self._broadcast_ready_event.wait()
 
     def queue_bytes_by_client(self) -> dict[str, int]:
         snapshot: dict[str, int] = {}
@@ -153,6 +159,7 @@ class TcpServer:
             self._server = None
 
         self._emit_event("server_stopped")
+        self._broadcast_ready_event.clear()
 
     async def broadcast(self, payload: bytes) -> None:
         if not payload:
@@ -191,6 +198,7 @@ class TcpServer:
                 return
 
         self._broadcast_ready_clients.add(client_id)
+        self._broadcast_ready_event.set()
 
         reader_task = asyncio.create_task(self._reader_loop(client_id, reader))
         self._reader_tasks[client_id] = reader_task
@@ -247,6 +255,8 @@ class TcpServer:
             return
 
         self._broadcast_ready_clients.discard(client_id)
+        if not self._broadcast_ready_clients:
+            self._broadcast_ready_event.clear()
 
         writer_task = self._writer_tasks.pop(client_id, None)
         if writer_task is not None and writer_task is not asyncio.current_task():

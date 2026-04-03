@@ -48,3 +48,34 @@ async def test_tcp_server_sends_header_before_broadcast_to_new_client() -> None:
             sender_task.cancel()
             await asyncio.gather(sender_task, return_exceptions=True)
         await server.stop()
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_wait_for_broadcast_clients_unblocks_on_connect() -> None:
+    server = TcpServer(
+        TcpServerConfig(
+            host="127.0.0.1",
+            port=0,
+            send_header_on_connect=True,
+            header_payload=b"id,value\n",
+        )
+    )
+    await server.start()
+
+    waiter = asyncio.create_task(server.wait_for_broadcast_clients())
+    try:
+        await asyncio.sleep(0.05)
+        assert not waiter.done()
+
+        reader, writer = await asyncio.open_connection("127.0.0.1", server.listening_port)
+        try:
+            await asyncio.wait_for(waiter, timeout=1.0)
+            assert waiter.done()
+            assert server.has_broadcast_clients()
+        finally:
+            writer.close()
+            await writer.wait_closed()
+            del reader
+    finally:
+        await server.stop()
