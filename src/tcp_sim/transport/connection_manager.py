@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import time
+from dataclasses import dataclass, field
 from typing import Any
 
 
@@ -50,7 +50,9 @@ class ConnectionManager:
     def get_client_state(self, client_id: str) -> ClientState | None:
         return self._clients.get(client_id)
 
-    def enqueue_payload(self, client_id: str, payload: bytes) -> tuple[bool, str | None]:
+    def enqueue_payload(
+        self, client_id: str, payload: bytes
+    ) -> tuple[bool, str | None]:
         state = self._clients.get(client_id)
         if state is None:
             return False, "client_not_found"
@@ -88,7 +90,9 @@ class ConnectionManager:
         return candidates
 
     def blocked_clients(self) -> list[str]:
-        return [client_id for client_id, state in self._clients.items() if state.blocked]
+        return [
+            client_id for client_id, state in self._clients.items() if state.blocked
+        ]
 
     def _update_blocked_state(self, state: ClientState) -> None:
         if state.queued_bytes >= self._thresholds.high_watermark_bytes:

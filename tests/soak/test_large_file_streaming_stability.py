@@ -1,6 +1,7 @@
-import pytest
-import tracemalloc
 import time
+import tracemalloc
+
+import pytest
 
 from tcp_sim.engine.file_reader import FileReader
 from tests.scenario_thresholds import (
@@ -52,4 +53,5 @@ def test_large_file_streaming_stability_baseline(tmp_path) -> None:
     assert rows_per_second >= TM_SOAK_01_MIN_ROWS_PER_SECOND
 
     data_path.unlink()
+    assert not data_path.exists()
     assert not data_path.exists()

@@ -109,6 +109,8 @@ def configure_json_logger(
     return logger
 
 
-def log_event(logger: logging.Logger, level: str | int, event: str, **fields: Any) -> None:
+def log_event(
+    logger: logging.Logger, level: str | int, event: str, **fields: Any
+) -> None:
     log_level = parse_log_level(level)
     logger.log(log_level, event, extra={"event": event, **fields})

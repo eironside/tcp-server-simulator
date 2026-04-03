@@ -1,7 +1,8 @@
-import pytest
 import asyncio
 import time
 import tracemalloc
+
+import pytest
 
 from tcp_sim.transport.tcp_server import TcpServer, TcpServerConfig
 from tests.scenario_thresholds import (
@@ -28,7 +29,9 @@ async def test_tcp_server_reconnect_storm_lifecycle() -> None:
 
         for _ in range(attempts):
             try:
-                reader, writer = await asyncio.open_connection("127.0.0.1", server.listening_port)
+                reader, writer = await asyncio.open_connection(
+                    "127.0.0.1", server.listening_port
+                )
                 writer.close()
                 await writer.wait_closed()
                 del reader
@@ -41,7 +44,9 @@ async def test_tcp_server_reconnect_storm_lifecycle() -> None:
         tracemalloc.stop()
 
         await asyncio.sleep(0.1)
-        memory_before = sum(stat.size for stat in snapshot_before.statistics("filename"))
+        memory_before = sum(
+            stat.size for stat in snapshot_before.statistics("filename")
+        )
         memory_after = sum(stat.size for stat in snapshot_after.statistics("filename"))
         memory_delta = memory_after - memory_before
 
@@ -51,6 +56,10 @@ async def test_tcp_server_reconnect_storm_lifecycle() -> None:
         assert elapsed_seconds <= TM_INT_01_MAX_ELAPSED_SECONDS
         assert memory_delta <= TM_INT_01_MAX_MEMORY_DELTA_BYTES
         assert server.connected_client_count == 0
-        assert sum(1 for item in server.events if item["event"] == "client_connect") >= successful_connections
+        assert (
+            sum(1 for item in server.events if item["event"] == "client_connect")
+            >= successful_connections
+        )
     finally:
+        await server.stop()
         await server.stop()

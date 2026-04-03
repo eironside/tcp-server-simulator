@@ -1,6 +1,7 @@
-import pytest
 import asyncio
 import socket
+
+import pytest
 
 from tcp_sim.transport.udp_server import UdpServer, UdpServerConfig
 
@@ -51,4 +52,5 @@ async def test_udp_reply_to_senders_cache_limits_and_expiry() -> None:
     finally:
         for sock in senders:
             sock.close()
+        await server.stop()
         await server.stop()

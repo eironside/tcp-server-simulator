@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import time
 from collections import OrderedDict
 from dataclasses import dataclass
-import time
 from typing import Callable
-
 
 EventCallback = Callable[[dict[str, object]], None]
 
@@ -102,7 +101,9 @@ class UdpServer:
 
         self.cleanup_expired()
         if self.config.recipient_mode == "multicast":
-            self._transport.sendto(payload, (self.config.multicast_host, self.config.multicast_port))
+            self._transport.sendto(
+                payload, (self.config.multicast_host, self.config.multicast_port)
+            )
             self._emit_event("udp_send_multicast", bytes=len(payload))
             await asyncio.sleep(0)
             return
@@ -110,7 +111,9 @@ class UdpServer:
         for recipient in self._recipient_cache.keys():
             self._transport.sendto(payload, recipient)
 
-        self._emit_event("udp_send_reply", recipients=len(self._recipient_cache), bytes=len(payload))
+        self._emit_event(
+            "udp_send_reply", recipients=len(self._recipient_cache), bytes=len(payload)
+        )
         await asyncio.sleep(0)
 
     def register_sender(self, addr: tuple[str, int]) -> None:

@@ -44,7 +44,9 @@ async def test_udp_reply_to_senders_cache_stability_thresholds() -> None:
     snapshot_before = tracemalloc.take_snapshot()
 
     try:
-        while (time.perf_counter() - started_at) < target_duration or sender_count < unique_sender_target:
+        while (
+            time.perf_counter() - started_at
+        ) < target_duration or sender_count < unique_sender_target:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             try:
                 sock.bind(("127.0.0.1", 0))

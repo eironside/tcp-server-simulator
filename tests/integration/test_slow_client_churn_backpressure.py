@@ -1,6 +1,7 @@
-import pytest
 import asyncio
 import time
+
+import pytest
 
 from tcp_sim.transport.tcp_server import TcpServer, TcpServerConfig
 from tests.scenario_thresholds import (
@@ -26,8 +27,12 @@ async def test_slow_client_is_disconnected_without_global_stall() -> None:
     )
     await server.start()
 
-    slow_reader, slow_writer = await asyncio.open_connection("127.0.0.1", server.listening_port)
-    fast_reader, fast_writer = await asyncio.open_connection("127.0.0.1", server.listening_port)
+    slow_reader, slow_writer = await asyncio.open_connection(
+        "127.0.0.1", server.listening_port
+    )
+    fast_reader, fast_writer = await asyncio.open_connection(
+        "127.0.0.1", server.listening_port
+    )
     received_chunks: list[bytes] = []
 
     async def consume_fast_client() -> None:
@@ -52,7 +57,9 @@ async def test_slow_client_is_disconnected_without_global_stall() -> None:
         assert broadcast_elapsed <= TM_INT_03_MAX_BROADCAST_SECONDS
 
         disconnected = False
-        disconnect_deadline = time.monotonic() + server.config.slow_client_timeout_seconds + 2.0
+        disconnect_deadline = (
+            time.monotonic() + server.config.slow_client_timeout_seconds + 2.0
+        )
         while time.monotonic() < disconnect_deadline:
             disconnected = any(
                 event.get("event") == "client_disconnect"
@@ -79,4 +86,5 @@ async def test_slow_client_is_disconnected_without_global_stall() -> None:
         fast_writer.close()
         await fast_writer.wait_closed()
         del slow_reader
+        await server.stop()
         await server.stop()

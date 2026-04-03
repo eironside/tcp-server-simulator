@@ -1,5 +1,6 @@
-import pytest
 from datetime import timezone
+
+import pytest
 
 from tcp_sim.engine.timestamp import (
     FORMAT_EPOCH_MILLIS,
@@ -24,7 +25,9 @@ def test_parse_and_format_iso8601() -> None:
 def test_parse_epoch_formats() -> None:
     millis = parse_timestamp("1712052000000", FORMAT_EPOCH_MILLIS)
     seconds_int = parse_timestamp("1712052000", FORMAT_EPOCH_SECONDS_INT)
-    seconds_fractional = parse_timestamp("1712052000.5", FORMAT_EPOCH_SECONDS_FRACTIONAL)
+    seconds_fractional = parse_timestamp(
+        "1712052000.5", FORMAT_EPOCH_SECONDS_FRACTIONAL
+    )
 
     assert int(millis.timestamp()) == 1712052000
     assert int(seconds_int.timestamp()) == 1712052000
@@ -37,4 +40,5 @@ def test_timestamp_rewriter_preserves_relative_offset() -> None:
     first = int(rewriter.rewrite("100"))
     second = int(rewriter.rewrite("105"))
 
+    assert second - first == 5
     assert second - first == 5
