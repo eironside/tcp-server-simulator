@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 
+from .gui.app import App
 from .preflight import all_checks_passed, render_report, run_preflight
 
 
@@ -14,6 +15,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--preflight-only",
         action="store_true",
         help="Run environment checks and exit.",
+    )
+    parser.add_argument(
+        "--headless",
+        action="store_true",
+        help="Do not launch tkinter GUI after preflight.",
     )
     return parser
 
@@ -34,7 +40,12 @@ def main(argv: list[str] | None = None) -> int:
         print("\nEnvironment is not ready. Resolve failures and try again.")
         return 1
 
-    print("tcp_sim bootstrap is ready. GUI implementation lands in later phases.")
+    if args.headless:
+        print("Preflight passed. Headless mode requested.")
+        return 0
+
+    app = App()
+    app.run()
     return 0
 
 
