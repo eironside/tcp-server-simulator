@@ -68,7 +68,9 @@ async def test_wait_for_broadcast_clients_unblocks_on_connect() -> None:
         await asyncio.sleep(0.05)
         assert not waiter.done()
 
-        reader, writer = await asyncio.open_connection("127.0.0.1", server.listening_port)
+        reader, writer = await asyncio.open_connection(
+            "127.0.0.1", server.listening_port
+        )
         try:
             await asyncio.wait_for(waiter, timeout=1.0)
             assert waiter.done()
