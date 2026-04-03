@@ -17,6 +17,14 @@ dev = [
   "pytest>=8.0",
   "pytest-asyncio>=0.23",
 ]
+packaging = [
+  "build>=1.2",
+  "pyinstaller>=6.0",
+  "cx_Freeze>=7.0",
+]
+
+[project.scripts]
+tcp-sim = "tcp_sim.main:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

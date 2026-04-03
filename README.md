@@ -143,8 +143,38 @@ nc -vz 127.0.0.1 5565
 - Soak baseline runs in CI with explicit threshold env values.
 - Full soak profile is enabled for `release/*` branches.
 
+## Packaging
+
+### pip package artifacts (wheel + sdist)
+
+```bash
+pip install -e .[packaging]
+python scripts/package_pip.py
+```
+
+### PyInstaller binary
+
+```bash
+pip install -e .[packaging]
+python scripts/package_pyinstaller.py
+```
+
+### cx_Freeze binary
+
+```bash
+pip install -e .[packaging]
+python scripts/package_cxfreeze.py
+```
+
+### Docker image
+
+```bash
+docker build -t tcp-server-simulator:latest .
+docker run --rm tcp-server-simulator:latest
+```
+
 ## Known MVP Constraints
 
 - GUI is functional-first (tkinter stdlib), not style-optimized.
-- TLS/SSL and advanced replay-by-original-timestamp modes are post-MVP.
+- Advanced replay-by-original-timestamp modes are post-MVP.
 - Manual socket checks are informational and non-gating.
