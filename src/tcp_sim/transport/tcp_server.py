@@ -62,6 +62,14 @@ class TcpServer:
     def has_clients(self) -> bool:
         return self.connected_client_count > 0
 
+    def queue_bytes_by_client(self) -> dict[str, int]:
+        snapshot: dict[str, int] = {}
+        for client_id in self._connection_manager.list_client_ids():
+            state = self._connection_manager.get_client_state(client_id)
+            if state is not None:
+                snapshot[client_id] = state.queued_bytes
+        return snapshot
+
     async def start(self) -> None:
         if self._running:
             return
