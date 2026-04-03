@@ -148,3 +148,9 @@ class ControlPanel(ttk.LabelFrame):
             parse_optional_int(self.end_line_var.get()),
             parse_optional_int(self.first_n_var.get()),
         )
+
+    def get_rate(self) -> float:
+        return float(self.rate_var.get().strip())
+
+    def get_loop(self) -> bool:
+        return bool(self.loop_var.get())

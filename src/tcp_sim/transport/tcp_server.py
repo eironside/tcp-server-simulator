@@ -76,6 +76,8 @@ class TcpServer:
         self._monitor_task: asyncio.Task[None] | None = None
         self._running = False
         self._listening_port = self.config.port
+        self._send_header_on_connect = self.config.send_header_on_connect
+        self._header_payload = self.config.header_payload
         self.events: list[dict[str, object]] = []
 
     @property
@@ -96,6 +98,14 @@ class TcpServer:
             if state is not None:
                 snapshot[client_id] = state.queued_bytes
         return snapshot
+
+    def update_header_payload(
+        self,
+        send_header_on_connect: bool,
+        header_payload: bytes | None,
+    ) -> None:
+        self._send_header_on_connect = send_header_on_connect
+        self._header_payload = header_payload
 
     async def start(self) -> None:
         if self._running:
@@ -166,9 +176,9 @@ class TcpServer:
         writer_task = asyncio.create_task(self._writer_loop(client_id))
         self._writer_tasks[client_id] = writer_task
 
-        if self.config.send_header_on_connect and self.config.header_payload:
+        if self._send_header_on_connect and self._header_payload:
             accepted, reason = self._connection_manager.enqueue_payload(
-                client_id, self.config.header_payload
+                client_id, self._header_payload
             )
             if not accepted:
                 await self._disconnect_client(

@@ -14,7 +14,7 @@ class ConfigPanel(ttk.LabelFrame):
 
         self.mode_var = tk.StringVar(value="server")
         self.protocol_var = tk.StringVar(value="tcp")
-        self.host_var = tk.StringVar(value="127.0.0.1")
+        self.host_var = tk.StringVar(value="0.0.0.0")
         self.port_var = tk.StringVar(value="5565")
         self.connect_timeout_var = tk.StringVar(value="10")
         self.send_timeout_var = tk.StringVar(value="10")

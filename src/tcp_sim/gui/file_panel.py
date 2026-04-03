@@ -7,6 +7,8 @@ from tkinter import filedialog, ttk
 
 from tcp_sim.engine.file_reader import FileReader
 
+from .controller import StreamSettings
+
 
 class FilePanel(ttk.LabelFrame):
     def __init__(self, master: tk.Misc) -> None:
@@ -14,6 +16,7 @@ class FilePanel(ttk.LabelFrame):
         self.file_var = tk.StringVar(value="")
         self.delimiter_var = tk.StringVar(value=",")
         self.has_header_var = tk.BooleanVar(value=True)
+        self.send_header_var = tk.BooleanVar(value=True)
 
         ttk.Label(self, text="Path").grid(row=0, column=0, sticky="w", padx=4, pady=2)
         ttk.Entry(self, textvariable=self.file_var, width=52).grid(
@@ -32,6 +35,11 @@ class FilePanel(ttk.LabelFrame):
         ttk.Checkbutton(self, text="Header Row", variable=self.has_header_var).grid(
             row=1, column=2, sticky="w", padx=4, pady=2
         )
+        ttk.Checkbutton(
+            self,
+            text="Send Header",
+            variable=self.send_header_var,
+        ).grid(row=1, column=3, sticky="w", padx=4, pady=2)
 
         self.preview = tk.Text(self, height=8, width=84)
         self.preview.grid(row=2, column=0, columnspan=3, sticky="nsew", padx=4, pady=4)
@@ -65,3 +73,19 @@ class FilePanel(ttk.LabelFrame):
             self.preview.insert(
                 tk.END, f"[{validity}] row={item.raw_row_number} {item.fields}\n"
             )
+
+    def build_stream_settings(
+        self,
+        rate_features_per_second: float,
+        loop: bool,
+        line_ending: str = "\n",
+    ) -> StreamSettings:
+        return StreamSettings(
+            file_path=self.file_var.get().strip(),
+            delimiter=self.delimiter_var.get() or ",",
+            has_header=self.has_header_var.get(),
+            send_header=self.send_header_var.get(),
+            rate_features_per_second=rate_features_per_second,
+            loop=loop,
+            line_ending=line_ending,
+        )
