@@ -78,8 +78,10 @@ TM_SOAK_01_DURATION_SECONDS=120 TM_SOAK_02_UNIQUE_SENDERS=2000 pytest -m soak -q
 1. Start app: `python -m tcp_sim`
 2. Set mode `server`, protocol `tcp`, bind host/port.
 3. Load data file and preview rows.
-4. Start transport.
-5. Confirm status panel updates for connections and progress.
+4. For Velocity delimited sampling, enable `Velocity Delimited Sampling Compatibility`.
+5. Keep `Header Row` on if your file contains a header, but let the preset disable `Send Header` during sampling.
+6. Start transport.
+7. Confirm status panel updates for connections and progress.
 
 ### Client Mode (Push Into Remote TCP Server)
 
@@ -114,6 +116,11 @@ TM_SOAK_01_DURATION_SECONDS=120 TM_SOAK_02_UNIQUE_SENDERS=2000 pytest -m soak -q
 
 - Cause: destination unavailable or connection refused.
 - Fix: verify remote endpoint is up and routing/firewall permit access.
+
+### Velocity shows raw samples but empty derived samples for delimited TCP
+
+- Cause: sampling can fail when each sampled record is parsed with header handling enabled and a header line is transmitted.
+- Fix: turn on `Velocity Delimited Sampling Compatibility` so the simulator suppresses the transmitted header and preserves LF delimiters.
 
 ### Soak tests fail on memory thresholds
 

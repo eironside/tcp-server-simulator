@@ -48,6 +48,7 @@ class StreamSettings:
     line_ending: str = "\n"
     strip_lf: bool = False
     strip_cr: bool = False
+    velocity_compatibility_mode: bool = False
 
 
 class SimulatorController:
@@ -103,6 +104,7 @@ class SimulatorController:
         stream_settings: StreamSettings,
     ) -> None:
         try:
+            stream_settings = self._apply_velocity_compatibility_preset(stream_settings)
             records, header_payload = self._load_records(stream_settings)
 
             if self._active_transport is not None:
@@ -260,6 +262,7 @@ class SimulatorController:
         line_ending: str = "\n",
         strip_lf: bool = False,
         strip_cr: bool = False,
+        velocity_compatibility_mode: bool = False,
     ) -> None:
         if self._stream_settings is None:
             self._emit("Cannot swap file before transmission has been started.")
@@ -274,6 +277,7 @@ class SimulatorController:
             line_ending=line_ending,
             strip_lf=strip_lf,
             strip_cr=strip_cr,
+            velocity_compatibility_mode=velocity_compatibility_mode,
         )
         self._loop.call_soon_threadsafe(self._swap_file, updated)
 
@@ -375,6 +379,8 @@ class SimulatorController:
         if self._engine is None:
             self._emit("Cannot swap file without an active transmission.")
             return
+
+        stream_settings = self._apply_velocity_compatibility_preset(stream_settings)
 
         try:
             records, header_payload = self._load_records(stream_settings)
@@ -524,6 +530,33 @@ class SimulatorController:
         if stream_settings.strip_lf:
             filtered = filtered.replace(b"\n", b"")
         return filtered
+
+    def _apply_velocity_compatibility_preset(
+        self,
+        stream_settings: StreamSettings,
+    ) -> StreamSettings:
+        if not stream_settings.velocity_compatibility_mode:
+            return stream_settings
+
+        adjusted = stream_settings
+        updates: list[str] = []
+
+        if adjusted.send_header:
+            adjusted = replace(adjusted, send_header=False)
+            updates.append("send_header=False")
+
+        if adjusted.strip_lf:
+            adjusted = replace(adjusted, strip_lf=False)
+            updates.append("strip_lf=False")
+
+        if updates:
+            self._emit(
+                "Velocity compatibility preset applied: " + ", ".join(updates) + "."
+            )
+        else:
+            self._emit("Velocity compatibility preset enabled.")
+
+        return adjusted
 
     def _on_transport_event(self, event: dict[str, object]) -> None:
         name = str(event.get("event", ""))

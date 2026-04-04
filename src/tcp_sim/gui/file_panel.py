@@ -19,6 +19,7 @@ class FilePanel(ttk.LabelFrame):
         self.send_header_var = tk.BooleanVar(value=True)
         self.strip_lf_var = tk.BooleanVar(value=False)
         self.strip_cr_var = tk.BooleanVar(value=False)
+        self.velocity_compatibility_var = tk.BooleanVar(value=False)
 
         ttk.Label(self, text="Path").grid(row=0, column=0, sticky="w", padx=4, pady=2)
         ttk.Entry(self, textvariable=self.file_var, width=52).grid(
@@ -37,22 +38,32 @@ class FilePanel(ttk.LabelFrame):
         ttk.Checkbutton(self, text="Header Row", variable=self.has_header_var).grid(
             row=1, column=2, sticky="w", padx=4, pady=2
         )
-        ttk.Checkbutton(
+        self.send_header_check = ttk.Checkbutton(
             self,
             text="Send Header",
             variable=self.send_header_var,
-        ).grid(row=1, column=3, sticky="w", padx=4, pady=2)
+        )
+        self.send_header_check.grid(row=1, column=3, sticky="w", padx=4, pady=2)
 
-        ttk.Checkbutton(
+        self.strip_lf_check = ttk.Checkbutton(
             self,
             text="Strip LF (\\n)",
             variable=self.strip_lf_var,
-        ).grid(row=2, column=0, sticky="w", padx=4, pady=2)
+        )
+        self.strip_lf_check.grid(row=2, column=0, sticky="w", padx=4, pady=2)
+
         ttk.Checkbutton(
             self,
             text="Strip CR (\\r)",
             variable=self.strip_cr_var,
         ).grid(row=2, column=1, sticky="w", padx=4, pady=2)
+
+        ttk.Checkbutton(
+            self,
+            text="Velocity Delimited Sampling Compatibility",
+            variable=self.velocity_compatibility_var,
+            command=self._on_velocity_compatibility_toggled,
+        ).grid(row=2, column=2, columnspan=2, sticky="w", padx=4, pady=2)
 
         self.preview = tk.Text(self, height=8, width=84)
         self.preview.grid(row=3, column=0, columnspan=4, sticky="nsew", padx=4, pady=4)
@@ -60,6 +71,19 @@ class FilePanel(ttk.LabelFrame):
         ttk.Button(self, text="Preview", command=self.load_preview).grid(
             row=4, column=2, sticky="e", padx=4, pady=4
         )
+
+    def _on_velocity_compatibility_toggled(self) -> None:
+        enabled = self.velocity_compatibility_var.get()
+
+        if enabled:
+            self.send_header_var.set(False)
+            self.strip_lf_var.set(False)
+            self.send_header_check.state(["disabled"])
+            self.strip_lf_check.state(["disabled"])
+            return
+
+        self.send_header_check.state(["!disabled"])
+        self.strip_lf_check.state(["!disabled"])
 
     def _browse_file(self) -> None:
         selected = filedialog.askopenfilename(
@@ -103,4 +127,5 @@ class FilePanel(ttk.LabelFrame):
             line_ending=line_ending,
             strip_lf=self.strip_lf_var.get(),
             strip_cr=self.strip_cr_var.get(),
+            velocity_compatibility_mode=self.velocity_compatibility_var.get(),
         )
