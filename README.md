@@ -14,7 +14,9 @@ TCP/UDP simulator for ArcGIS Velocity validation.
 ## Quick Start (venv-first)
 
 ### Windows (PowerShell)
+Run the run.ps1 script in Powershell.
 
+Contents of that script:
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
