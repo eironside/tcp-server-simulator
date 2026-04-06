@@ -28,6 +28,9 @@ class FilePanel(ttk.LabelFrame):
         ttk.Button(self, text="Browse", command=self._browse_file).grid(
             row=0, column=2, sticky="w", padx=4, pady=2
         )
+        ttk.Button(self, text="Refresh", command=self.load_preview).grid(
+            row=0, column=3, sticky="w", padx=4, pady=2
+        )
 
         ttk.Label(self, text="Delimiter").grid(
             row=1, column=0, sticky="w", padx=4, pady=2
@@ -68,10 +71,6 @@ class FilePanel(ttk.LabelFrame):
         self.preview = tk.Text(self, height=8, width=84)
         self.preview.grid(row=3, column=0, columnspan=4, sticky="nsew", padx=4, pady=4)
 
-        ttk.Button(self, text="Preview", command=self.load_preview).grid(
-            row=4, column=2, sticky="e", padx=4, pady=4
-        )
-
     def _on_velocity_compatibility_toggled(self) -> None:
         enabled = self.velocity_compatibility_var.get()
 
@@ -98,6 +97,7 @@ class FilePanel(ttk.LabelFrame):
         )
         if selected:
             self.file_var.set(selected)
+            self.load_preview()
 
     def load_preview(self) -> None:
         self.preview.delete("1.0", tk.END)

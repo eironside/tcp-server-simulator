@@ -27,13 +27,19 @@ class StatusPanel(ttk.LabelFrame):
         ttk.Label(self, textvariable=self.sent_var).grid(
             row=3, column=0, sticky="w", padx=4, pady=2
         )
+        ttk.Button(self, text="Clear", command=self.clear_events).grid(
+            row=3, column=1, sticky="e", padx=4, pady=2
+        )
 
         self.events = tk.Text(self, height=6, width=84)
-        self.events.grid(row=4, column=0, sticky="nsew", padx=4, pady=4)
+        self.events.grid(row=4, column=0, columnspan=2, sticky="nsew", padx=4, pady=4)
 
     def append_event(self, message: str) -> None:
         self.events.insert(tk.END, f"{message}\n")
         self.events.see(tk.END)
+
+    def clear_events(self) -> None:
+        self.events.delete("1.0", tk.END)
 
     def update_connections(self, count: int) -> None:
         self.connection_var.set(f"Connections: {count}")
