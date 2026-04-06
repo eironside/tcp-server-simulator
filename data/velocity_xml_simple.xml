@@ -1,0 +1,4 @@
+<event><eventId>xml-simple-0001</eventId><timestamp>2026-04-06T14:40:00Z</timestamp><assetId>veh-501</assetId><lat>34.0564</lat><lon>-117.1956</lon><speedMph>38.4</speedMph><status>moving</status></event>
+<event><eventId>xml-simple-0002</eventId><timestamp>2026-04-06T14:40:01Z</timestamp><assetId>veh-502</assetId><lat>34.0611</lat><lon>-117.1912</lon><speedMph>0.0</speedMph><status>stopped</status></event>
+<event><eventId>xml-simple-0003</eventId><timestamp>2026-04-06T14:40:02Z</timestamp><assetId>veh-503</assetId><lat>34.0664</lat><lon>-117.1848</lon><speedMph>26.8</speedMph><status>moving</status></event>
+<event><eventId>xml-simple-0004</eventId><timestamp>2026-04-06T14:40:03Z</timestamp><assetId>veh-504</assetId><lat>34.0703</lat><lon>-117.1785</lon><speedMph>14.2</speedMph><status>idle</status></event>

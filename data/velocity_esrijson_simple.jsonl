@@ -1,0 +1,4 @@
+{"attributes":{"eventId":"esri-simple-0001","assetId":"veh-201","status":"moving","speedMph":35.8,"eventTime":"2026-04-06T14:20:00Z"},"geometry":{"x":-117.1956,"y":34.0564,"spatialReference":{"wkid":4326}}}
+{"attributes":{"eventId":"esri-simple-0002","assetId":"veh-202","status":"stopped","speedMph":0.0,"eventTime":"2026-04-06T14:20:01Z"},"geometry":{"x":-117.1912,"y":34.0611,"spatialReference":{"wkid":4326}}}
+{"attributes":{"eventId":"esri-simple-0003","assetId":"veh-203","status":"moving","speedMph":28.7,"eventTime":"2026-04-06T14:20:02Z"},"geometry":{"x":-117.1848,"y":34.0664,"spatialReference":{"wkid":4326}}}
+{"attributes":{"eventId":"esri-simple-0004","assetId":"veh-204","status":"idle","speedMph":4.3,"eventTime":"2026-04-06T14:20:03Z"},"geometry":{"x":-117.1785,"y":34.0703,"spatialReference":{"wkid":4326}}}

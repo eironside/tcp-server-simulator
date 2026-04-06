@@ -1,0 +1,4 @@
+{"type":"Feature","id":"geojson-simple-0001","geometry":{"type":"Point","coordinates":[-117.1956,34.0564]},"properties":{"timestamp":"2026-04-06T14:30:00Z","assetId":"veh-301","speedMph":40.2,"status":"moving"}}
+{"type":"Feature","id":"geojson-simple-0002","geometry":{"type":"Point","coordinates":[-117.1912,34.0611]},"properties":{"timestamp":"2026-04-06T14:30:01Z","assetId":"veh-302","speedMph":0.0,"status":"stopped"}}
+{"type":"Feature","id":"geojson-simple-0003","geometry":{"type":"Point","coordinates":[-117.1848,34.0664]},"properties":{"timestamp":"2026-04-06T14:30:02Z","assetId":"veh-303","speedMph":33.4,"status":"moving"}}
+{"type":"Feature","id":"geojson-simple-0004","geometry":{"type":"Point","coordinates":[-117.1785,34.0703]},"properties":{"timestamp":"2026-04-06T14:30:03Z","assetId":"veh-304","speedMph":15.6,"status":"idle"}}
