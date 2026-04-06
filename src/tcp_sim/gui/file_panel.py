@@ -88,7 +88,13 @@ class FilePanel(ttk.LabelFrame):
     def _browse_file(self) -> None:
         selected = filedialog.askopenfilename(
             title="Select data file",
-            filetypes=[("Delimited files", "*.csv *.txt *.tsv"), ("All files", "*.*")],
+            filetypes=[
+                (
+                    "Supported data files",
+                    "*.csv *.txt *.tsv *.json *.jsonl *.xml",
+                ),
+                ("All files", "*.*"),
+            ],
         )
         if selected:
             self.file_var.set(selected)
