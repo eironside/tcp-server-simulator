@@ -17,13 +17,20 @@ def _wait_for_status(
     expected_fragment: str,
     timeout_seconds: float = 3.0,
 ) -> bool:
+    # Preserve messages across successive calls so sequential waits do not
+    # race each other: a message drained while looking for fragment A must
+    # still be visible when we later look for fragment B.
+    seen: list[str] = getattr(controller, "_test_seen_messages", [])
+    setattr(controller, "_test_seen_messages", seen)
     deadline = time.monotonic() + timeout_seconds
-    while time.monotonic() < deadline:
-        for message in controller.read_status_messages():
+    while True:
+        seen.extend(controller.read_status_messages())
+        for message in seen:
             if expected_fragment in message:
                 return True
+        if time.monotonic() >= deadline:
+            return False
         time.sleep(0.05)
-    return False
 
 
 @pytest.mark.integration
