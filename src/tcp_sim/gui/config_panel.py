@@ -16,6 +16,7 @@ class ConfigPanel(ttk.LabelFrame):
         self.protocol_var = tk.StringVar(value="tcp")
         self.host_var = tk.StringVar(value="0.0.0.0")
         self.port_var = tk.StringVar(value="5565")
+        self.role_var = tk.StringVar(value="sender")
         self.connect_timeout_var = tk.StringVar(value="10")
         self.send_timeout_var = tk.StringVar(value="10")
         self.reconnect_backoff_var = tk.StringVar(value="30")
@@ -45,6 +46,15 @@ class ConfigPanel(ttk.LabelFrame):
             state="readonly",
             width=10,
         ).grid(row=0, column=3, sticky="w", padx=4, pady=2)
+
+        ttk.Label(self, text="Role").grid(row=0, column=4, sticky="w", padx=4, pady=2)
+        ttk.Combobox(
+            self,
+            textvariable=self.role_var,
+            values=["sender", "receiver"],
+            state="readonly",
+            width=10,
+        ).grid(row=0, column=5, sticky="w", padx=4, pady=2)
 
         ttk.Label(self, text="Host").grid(row=1, column=0, sticky="w", padx=4, pady=2)
         ttk.Entry(self, textvariable=self.host_var, width=16).grid(
@@ -135,3 +145,6 @@ class ConfigPanel(ttk.LabelFrame):
             tls_verify=self.tls_verify_var.get(),
             tls_server_hostname=tls_server_hostname,
         )
+
+    def get_role(self) -> str:
+        return self.role_var.get().strip().lower()

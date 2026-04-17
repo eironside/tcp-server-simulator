@@ -12,11 +12,30 @@ from queue import Queue
 from typing import Any
 
 from tcp_sim.engine.file_reader import FileReader
+from tcp_sim.engine.framer import FramingMode
+from tcp_sim.engine.receiver import ReceiverEngine
 from tcp_sim.engine.scheduler import ScheduledMessage
 from tcp_sim.engine.simulator import SimulatorEngine
+from tcp_sim.engine.sink_writer import SinkConfig, SinkFormat
+from tcp_sim.transport.tcp_client_receiver import (
+    TcpClientReceiver,
+    TcpClientReceiverConfig,
+)
 from tcp_sim.transport.tcp_client_sender import TcpClientConfig, TcpClientSender
+from tcp_sim.transport.tcp_server_receiver import (
+    TcpServerReceiver,
+    TcpServerReceiverConfig,
+)
 from tcp_sim.transport.tcp_server_sender import TcpServerConfig, TcpServerSender
+from tcp_sim.transport.udp_client_receiver import (
+    UdpClientReceiver,
+    UdpClientReceiverConfig,
+)
 from tcp_sim.transport.udp_client_sender import UdpClientConfig, UdpClientSender
+from tcp_sim.transport.udp_server_receiver import (
+    UdpServerReceiver,
+    UdpServerReceiverConfig,
+)
 from tcp_sim.transport.udp_server_sender import UdpServerConfig, UdpServerSender
 
 
@@ -51,6 +70,44 @@ class StreamSettings:
     velocity_compatibility_mode: bool = False
 
 
+@dataclass
+class SinkSettings:
+    enabled: bool = False
+    path: str | None = None
+    format: str = "jsonl"  # "jsonl" | "delimited"
+    record_separator: bytes = b"\n"
+    rotation_max_bytes: int = 100 * 1024 * 1024
+    rotation_backup_count: int = 5
+    queue_high_watermark_bytes: int = 8 * 1024 * 1024
+    queue_low_watermark_bytes: int = 2 * 1024 * 1024
+    queue_max_bytes: int = 32 * 1024 * 1024
+
+    def to_sink_config(self) -> SinkConfig:
+        return SinkConfig(
+            enabled=self.enabled,
+            path=self.path,
+            format=SinkFormat(self.format),
+            record_separator=self.record_separator,
+            rotation_max_bytes=self.rotation_max_bytes,
+            rotation_backup_count=self.rotation_backup_count,
+            queue_high_watermark_bytes=self.queue_high_watermark_bytes,
+            queue_low_watermark_bytes=self.queue_low_watermark_bytes,
+            queue_max_bytes=self.queue_max_bytes,
+        )
+
+
+@dataclass
+class ReceiverSettings:
+    framing_mode: str = "lf"  # "lf" | "crlf" | "raw_chunk"
+    max_record_bytes: int = 1 << 20
+    # UDP-only knobs
+    udp_multicast_group: str | None = None
+    udp_multicast_interface: str = "0.0.0.0"
+    udp_client_hello_payload: bytes | None = None
+    udp_client_hello_interval_seconds: float = 0.0
+    udp_client_filter_remote_peer: bool = False
+
+
 class SimulatorController:
     """Owns async resources and exposes thread-safe control methods for tkinter."""
 
@@ -70,6 +127,12 @@ class SimulatorController:
             None,
             None,
         )
+        # Receiver-role state. Mutually exclusive with sender state: the
+        # controller enforces stop+rebind when the role toggles.
+        self._receiver_engine: ReceiverEngine | None = None
+        self._receiver_transport: Any = None
+        self._receiver_stats_task: asyncio.Task[None] | None = None
+        self._active_role: str = "sender"
 
     def _run_loop(self) -> None:
         asyncio.set_event_loop(self._loop)
@@ -582,11 +645,208 @@ class SimulatorController:
 
     def shutdown(self) -> None:
         future = asyncio.run_coroutine_threadsafe(
-            self._stop_transport_async(), self._loop
+            self._stop_everything_async(), self._loop
         )
         try:
-            future.result(timeout=3)
+            future.result(timeout=5)
         except (TimeoutError, asyncio.TimeoutError, RuntimeError):
             pass
         self._loop.call_soon_threadsafe(self._loop.stop)
         self._loop_thread.join(timeout=3)
+
+    # ----- Receiver role ---------------------------------------------------
+
+    def start_reception(
+        self,
+        settings: RuntimeSettings,
+        receiver_settings: ReceiverSettings,
+        sink_settings: SinkSettings,
+    ) -> None:
+        asyncio.run_coroutine_threadsafe(
+            self._start_reception_async(settings, receiver_settings, sink_settings),
+            self._loop,
+        )
+
+    def stop_reception(self) -> None:
+        asyncio.run_coroutine_threadsafe(self._stop_reception_async(), self._loop)
+
+    def configure_sink(self, sink_settings: SinkSettings) -> None:
+        asyncio.run_coroutine_threadsafe(
+            self._configure_sink_async(sink_settings), self._loop
+        )
+
+    async def _start_reception_async(
+        self,
+        settings: RuntimeSettings,
+        receiver_settings: ReceiverSettings,
+        sink_settings: SinkSettings,
+    ) -> None:
+        try:
+            # Role transition: tear down any sender state before rebinding.
+            if self._active_transport is not None or self._engine is not None:
+                self._emit("Switching to receiver role; stopping sender...")
+                await self._stop_transport_async()
+            if self._receiver_engine is not None:
+                await self._stop_reception_async()
+
+            transport = self._build_receiver_transport(settings, receiver_settings)
+            engine = ReceiverEngine(
+                transport,
+                sink_settings.to_sink_config(),
+                on_event=self._on_receiver_event,
+            )
+            self._receiver_transport = transport
+            self._receiver_engine = engine
+            self._active_settings = settings
+            self._active_role = "receiver"
+
+            await engine.start()
+            self._emit(
+                "Reception started: "
+                f"{settings.mode}/{settings.protocol} on "
+                f"{settings.host}:{settings.port}"
+            )
+            self._start_receiver_stats_loop()
+        except (OSError, RuntimeError, ValueError) as exc:
+            self._emit(f"Failed to start reception: {exc}")
+            await self._stop_reception_async()
+
+    async def _stop_reception_async(self) -> None:
+        if self._receiver_stats_task is not None:
+            self._receiver_stats_task.cancel()
+            await asyncio.gather(self._receiver_stats_task, return_exceptions=True)
+            self._receiver_stats_task = None
+        if self._receiver_engine is not None:
+            await self._receiver_engine.stop()
+            self._receiver_engine = None
+            self._receiver_transport = None
+            self._emit("Reception stopped.")
+            self._emit("__receiver_records__:0:0")
+            self._emit("__receiver_sink__:disabled:0:0")
+        if self._active_role == "receiver":
+            self._active_role = "sender"
+            self._active_settings = None
+
+    async def _configure_sink_async(self, sink_settings: SinkSettings) -> None:
+        if self._receiver_engine is None:
+            self._emit("No active receiver; sink configuration ignored.")
+            return
+        await self._receiver_engine.configure_sink(sink_settings.to_sink_config())
+        self._emit(
+            f"Sink reconfigured: enabled={sink_settings.enabled}, "
+            f"format={sink_settings.format}, path={sink_settings.path}"
+        )
+
+    async def _stop_everything_async(self) -> None:
+        await self._stop_reception_async()
+        await self._stop_transport_async()
+
+    def _build_receiver_transport(
+        self,
+        settings: RuntimeSettings,
+        receiver_settings: ReceiverSettings,
+    ) -> Any:
+        mode = settings.mode.lower()
+        protocol = settings.protocol.lower()
+        framing = FramingMode(receiver_settings.framing_mode)
+
+        if protocol == "tcp" and mode == "server":
+            return TcpServerReceiver(
+                TcpServerReceiverConfig(
+                    host=settings.host,
+                    port=settings.port,
+                    framing_mode=framing,
+                    max_record_bytes=receiver_settings.max_record_bytes,
+                    use_tls=settings.use_tls,
+                    tls_certfile=settings.tls_certfile,
+                    tls_keyfile=settings.tls_keyfile,
+                    tls_ca_file=settings.tls_ca_file,
+                )
+            )
+        if protocol == "tcp" and mode == "client":
+            return TcpClientReceiver(
+                TcpClientReceiverConfig(
+                    host=settings.host,
+                    port=settings.port,
+                    connect_timeout_seconds=settings.connect_timeout_seconds,
+                    reconnect_max_backoff_seconds=settings.reconnect_max_backoff_seconds,
+                    framing_mode=framing,
+                    max_record_bytes=receiver_settings.max_record_bytes,
+                    use_tls=settings.use_tls,
+                    tls_ca_file=settings.tls_ca_file,
+                    tls_verify=settings.tls_verify,
+                    tls_server_hostname=settings.tls_server_hostname,
+                )
+            )
+        if protocol == "udp" and mode == "server":
+            return UdpServerReceiver(
+                UdpServerReceiverConfig(
+                    host=settings.host,
+                    port=settings.port,
+                    max_record_bytes=receiver_settings.max_record_bytes,
+                    multicast_group=receiver_settings.udp_multicast_group,
+                    multicast_interface=receiver_settings.udp_multicast_interface,
+                )
+            )
+        if protocol == "udp" and mode == "client":
+            return UdpClientReceiver(
+                UdpClientReceiverConfig(
+                    host=settings.host,
+                    port=settings.port,
+                    max_record_bytes=receiver_settings.max_record_bytes,
+                    hello_payload=receiver_settings.udp_client_hello_payload,
+                    hello_interval_seconds=(
+                        receiver_settings.udp_client_hello_interval_seconds
+                    ),
+                    filter_remote_peer=receiver_settings.udp_client_filter_remote_peer,
+                )
+            )
+        raise ValueError(
+            f"Unsupported receiver mode/protocol combination: {mode}/{protocol}"
+        )
+
+    def _on_receiver_event(self, event: dict[str, object]) -> None:
+        name = str(event.get("event", ""))
+        detail_parts = [
+            f"{key}={value}" for key, value in event.items() if key != "event"
+        ]
+        details = ", ".join(detail_parts)
+        self._emit(f"{name}: {details}" if details else name)
+
+    def _start_receiver_stats_loop(self) -> None:
+        if (
+            self._receiver_stats_task is not None
+            and not self._receiver_stats_task.done()
+        ):
+            return
+        self._receiver_stats_task = asyncio.create_task(self._receiver_stats_loop())
+
+    async def _receiver_stats_loop(self) -> None:
+        last_records = 0
+        last_bytes = 0
+        last_ts = time.monotonic()
+        while True:
+            await asyncio.sleep(0.25)
+            engine = self._receiver_engine
+            if engine is None:
+                return
+            now = time.monotonic()
+            elapsed = max(now - last_ts, 1e-6)
+            stats = engine.stats
+            delta_records = stats.records_received - last_records
+            delta_bytes = stats.bytes_received - last_bytes
+            last_records = stats.records_received
+            last_bytes = stats.bytes_received
+            last_ts = now
+            self._emit(
+                f"__receiver_records__:{stats.records_received}:{stats.bytes_received}"
+            )
+            self._emit(
+                f"__receiver_rate__:{delta_records / elapsed:.3f}:"
+                f"{(delta_bytes / 1024.0) / elapsed:.3f}"
+            )
+            self._emit(
+                "__receiver_sink__:"
+                f"{'enabled' if stats.sink_enabled else 'disabled'}:"
+                f"{stats.sink_records_written}:{stats.sink_bytes_written}"
+            )

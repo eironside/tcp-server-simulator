@@ -7,7 +7,7 @@ from tkinter import ttk
 
 from .config_panel import ConfigPanel
 from .control_panel import ControlPanel
-from .controller import SimulatorController
+from .controller import ReceiverSettings, SimulatorController, SinkSettings
 from .file_panel import FilePanel
 from .log_panel import LogPanel
 from .status_panel import StatusPanel
@@ -57,6 +57,23 @@ class App:
     def _on_start(self) -> None:
         try:
             settings = self.config_panel.build_runtime_settings()
+        except ValueError as exc:
+            self.status_panel.append_event(f"Invalid start configuration: {exc}")
+            return
+
+        role = self.config_panel.get_role()
+        if role == "receiver":
+            # MVP: sink is disabled by default; runtime enable happens via
+            # `controller.configure_sink(...)` once a sink panel lands.
+            self.controller.start_reception(
+                settings,
+                ReceiverSettings(),
+                SinkSettings(),
+            )
+            self.status_panel.append_event("Reception requested.")
+            return
+
+        try:
             stream_settings = self.file_panel.build_stream_settings(
                 rate_features_per_second=self.control_panel.get_rate(),
                 loop=self.control_panel.get_loop(),
@@ -70,7 +87,10 @@ class App:
         self.status_panel.append_event("Start requested.")
 
     def _on_stop(self) -> None:
-        self.controller.stop_transport()
+        if self.config_panel.get_role() == "receiver":
+            self.controller.stop_reception()
+        else:
+            self.controller.stop_transport()
         self.status_panel.append_event("Stop requested.")
 
     def _on_pause(self) -> None:

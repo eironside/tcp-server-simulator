@@ -7,10 +7,32 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-CURRENT_SCHEMA_VERSION = 1
+CURRENT_SCHEMA_VERSION = 2
+
+DEFAULT_RECEIVER_CONFIG: dict[str, Any] = {
+    "framing_mode": "lf",
+    "max_record_bytes": 1048576,
+    "udp_multicast_group": None,
+    "udp_multicast_interface": "0.0.0.0",
+    "udp_client_hello_payload": None,
+    "udp_client_hello_interval_seconds": 0.0,
+    "udp_client_filter_remote_peer": False,
+    "sink": {
+        "enabled": False,
+        "path": None,
+        "format": "jsonl",
+        "record_separator": "\n",
+        "rotation_max_bytes": 104857600,
+        "rotation_backup_count": 5,
+        "queue_high_watermark_bytes": 8388608,
+        "queue_low_watermark_bytes": 2097152,
+        "queue_max_bytes": 33554432,
+    },
+}
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "schema_version": CURRENT_SCHEMA_VERSION,
+    "role": "sender",
     "mode": "server",
     "protocol": "tcp",
     "host": "0.0.0.0",
@@ -50,6 +72,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "udp_recipient_cache_max_entries": 256,
     "udp_recipient_cache_cleanup_interval_seconds": 30,
     "udp_recipient_cache_eviction_policy": "lru",
+    "receiver": DEFAULT_RECEIVER_CONFIG,
 }
 
 
@@ -74,6 +97,19 @@ def _normalize_config(raw: dict[str, Any]) -> dict[str, Any]:
     merged = load_default_config()
     merged.update(raw)
     merged["schema_version"] = CURRENT_SCHEMA_VERSION
+    # Ensure nested receiver block is populated even if the source config
+    # only provided a partial override.
+    receiver = merged.get("receiver")
+    if not isinstance(receiver, dict):
+        receiver = {}
+    normalized_receiver = dict(DEFAULT_RECEIVER_CONFIG)
+    normalized_receiver.update(receiver)
+    sink_override = receiver.get("sink") if isinstance(receiver, dict) else None
+    normalized_sink = dict(DEFAULT_RECEIVER_CONFIG["sink"])
+    if isinstance(sink_override, dict):
+        normalized_sink.update(sink_override)
+    normalized_receiver["sink"] = normalized_sink
+    merged["receiver"] = normalized_receiver
     return merged
 
 
@@ -90,8 +126,18 @@ def _migrate_v0_to_v1(raw: dict[str, Any]) -> dict[str, Any]:
             "max_reconnect_backoff_seconds"
         )
 
-    migrated["schema_version"] = CURRENT_SCHEMA_VERSION
-    return _normalize_config(migrated)
+    migrated["schema_version"] = 1
+    return migrated
+
+
+def _migrate_v1_to_v2(raw: dict[str, Any]) -> dict[str, Any]:
+    # v1 -> v2: introduce the `role` field (default "sender" to preserve
+    # pre-receiver behaviour) and the `receiver` sub-object.
+    migrated = dict(raw)
+    migrated.setdefault("role", "sender")
+    migrated.setdefault("receiver", dict(DEFAULT_RECEIVER_CONFIG))
+    migrated["schema_version"] = 2
+    return migrated
 
 
 def migrate_config(
@@ -106,17 +152,27 @@ def migrate_config(
     if version_value == CURRENT_SCHEMA_VERSION:
         return _normalize_config(raw), warnings, False, version_value
 
-    if version_value == 0:
-        warnings.append("Migrated config schema from v0 to v1.")
-        return _migrate_v0_to_v1(raw), warnings, True, version_value
-
     if version_value > CURRENT_SCHEMA_VERSION:
         raise ConfigError(
             f"Unsupported future schema version: {version_value}. "
             f"Current supported version is {CURRENT_SCHEMA_VERSION}."
         )
 
-    raise ConfigError(f"Unsupported legacy schema version: {version_value}.")
+    migrated = dict(raw)
+    migrated_any = False
+    if version_value == 0:
+        migrated = _migrate_v0_to_v1(migrated)
+        warnings.append("Migrated config schema from v0 to v1.")
+        migrated_any = True
+    if migrated.get("schema_version") == 1:
+        migrated = _migrate_v1_to_v2(migrated)
+        warnings.append("Migrated config schema from v1 to v2.")
+        migrated_any = True
+
+    if not migrated_any:
+        raise ConfigError(f"Unsupported legacy schema version: {version_value}.")
+
+    return _normalize_config(migrated), warnings, True, version_value
 
 
 def load_config_file(path: str | Path) -> ConfigLoadResult:
