@@ -717,10 +717,21 @@ class SimulatorController:
             await asyncio.gather(self._receiver_stats_task, return_exceptions=True)
             self._receiver_stats_task = None
         if self._receiver_engine is not None:
-            await self._receiver_engine.stop()
+            engine = self._receiver_engine
+            # Always detach state first so a slow/hung stop() cannot leave
+            # the controller wedged in "receiver-running" mode.
             self._receiver_engine = None
             self._receiver_transport = None
-            self._emit("Reception stopped.")
+            try:
+                await asyncio.wait_for(engine.stop(), timeout=5.0)
+                self._emit("Reception stopped.")
+            except asyncio.TimeoutError:
+                self._emit(
+                    "Reception stop timed out after 5s; forcing teardown. "
+                    "Check JSON log for receiver_stop_timeout."
+                )
+            except Exception as exc:  # pragma: no cover - defensive
+                self._emit(f"Reception stop raised: {exc!r}")
             self._emit("__receiver_records__:0:0")
             self._emit("__receiver_sink__:disabled:0:0")
         if self._active_role == "receiver":

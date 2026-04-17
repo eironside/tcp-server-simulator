@@ -104,10 +104,22 @@ class TcpServerReceiver(EventEmitter):
             with suppress(Exception):
                 await self._server.wait_closed()
             self._server = None
-        for task in list(self._peer_tasks.values()):
+        peer_tasks = list(self._peer_tasks.values())
+        for task in peer_tasks:
             task.cancel()
-        if self._peer_tasks:
-            await asyncio.gather(*self._peer_tasks.values(), return_exceptions=True)
+        if peer_tasks:
+            # Bound the wait: a peer that refuses to close its side of the
+            # socket must not be able to hang the whole shutdown path.
+            try:
+                await asyncio.wait_for(
+                    asyncio.gather(*peer_tasks, return_exceptions=True),
+                    timeout=2.0,
+                )
+            except asyncio.TimeoutError:
+                self._emit_event(
+                    "receiver_stop_timeout",
+                    stuck_peer_count=sum(1 for t in peer_tasks if not t.done()),
+                )
         self._peer_tasks.clear()
         self._emit_event("receiver_stopped")
 
@@ -169,8 +181,10 @@ class TcpServerReceiver(EventEmitter):
         finally:
             self._peer_tasks.pop(src, None)
             writer.close()
-            with suppress(OSError, RuntimeError):
-                await writer.wait_closed()
+            with suppress(OSError, RuntimeError, asyncio.TimeoutError):
+                # Bound wait_closed() so a half-closed remote cannot wedge
+                # the stop path.
+                await asyncio.wait_for(writer.wait_closed(), timeout=1.0)
             self._emit_event("peer_disconnected", src=src, reason=reason)
 
     def _deliver(self, src: str, record: FramedRecord) -> None:
