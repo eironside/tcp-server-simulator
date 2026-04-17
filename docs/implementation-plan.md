@@ -1,6 +1,6 @@
 # TCP Server Simulator - Implementation Plan
 
-> Status: Sender MVP complete; Receiver role in planning
+> Status: MVP feature-complete; release hardening in progress
 > Last Updated: 2026-04-17
 > Canonical Requirements: docs/design-and-requirements.md
 
@@ -41,9 +41,9 @@ MVP is complete only when all of the following are true:
 | Phase 3 UDP + scheduler + timestamp + runtime reconfiguration | Complete |
 | Phase 4 sender GUI (controller + panels + log panel) | Complete |
 | Transport module split (`_sender` variants, history-preserving rename) | Complete |
-| **Phase 2b receiver transport + engine (framer, sink writer)** | **Not started** |
-| **Phase 4b GUI role toggle + receiver/sink panels** | **Not started** |
-| Phase 5 hardening / release candidate tag | Not started |
+| Phase 2b receiver transport + engine (framer, sink writer) | Complete |
+| Phase 4b GUI role toggle + receiver/sink panels | Complete (role toggle; dedicated SinkPanel widget deferred) |
+| Phase 5 hardening / release candidate tag | In progress |
 
 ---
 
@@ -68,13 +68,13 @@ Use small, mergeable PRs in this order:
 5. PR-05 Scheduler + timestamp rewrite + runtime file/rate reconfiguration [merged]
 6. PR-06 GUI integration (controller + panels) [merged]
 7. PR-07a Transport module split into `_sender` variants [merged]
-8. **PR-07b `transport/base.py` extraction + sender class rename (`TcpServer`→`TcpServerSender`, etc.)**
-9. **PR-08 `engine/framer.py` + `engine/sink_writer.py` with unit tests**
-10. **PR-09 TCP receiver transports (`tcp_server_receiver.py`, `tcp_client_receiver.py`) + `engine/receiver.py`**
-11. **PR-10 UDP receiver transports (`udp_server_receiver.py`, `udp_client_receiver.py`)**
-12. **PR-11 GUI role toggle + receiver/sink panels + controller wiring for Receiver role**
-13. **PR-12 Receiver integration + soak tests (TM-INT-04, TM-SOAK-03)**
-14. PR-13 Soak hardening + docs + release readiness
+8. PR-07b `transport/base.py` extraction + sender class rename (`TcpServer`→`TcpServerSender`, etc.) [merged]
+9. PR-08 `engine/framer.py` + `engine/sink_writer.py` with unit tests [merged]
+10. PR-09 TCP receiver transports (`tcp_server_receiver.py`, `tcp_client_receiver.py`) + `engine/receiver.py` [merged]
+11. PR-10 UDP receiver transports (`udp_server_receiver.py`, `udp_client_receiver.py`) [merged]
+12. PR-11 GUI role toggle + receiver controller wiring [merged]
+13. PR-12 Receiver soak test (TM-SOAK-03) [merged]
+14. **PR-13 Soak hardening + docs + release readiness**
 
 Each PR should include:
 
@@ -455,14 +455,14 @@ This keeps implementation aligned with the spec and prevents drift.
 
 ## 8. Immediate Next Actions
 
-Sender-side Phases 0–4 are complete. Receiver work is the critical path. Start with these in order:
+Sender and receiver pipelines are feature-complete and the full unit + integration + soak matrix passes locally (TM-INT-01 through TM-INT-04; TM-SOAK-01 through TM-SOAK-03). Remaining work is Phase 5 hardening only:
 
-1. **PR-07b:** Extract `transport/base.py` from the existing `_sender` modules and rename exported classes (`TcpServer`→`TcpServerSender`, etc.). Keep behavior identical; tests must still pass.
-2. **PR-08:** Implement `engine/framer.py` and `engine/sink_writer.py` with full unit test coverage. No sockets required.
-3. **PR-09:** Implement `tcp_server_receiver.py` + `tcp_client_receiver.py` + `engine/receiver.py` on top of `base.py`. Add TCP receiver integration tests.
-4. **PR-10:** Implement `udp_server_receiver.py` + `udp_client_receiver.py`. Add UDP receiver integration tests, completing TM-INT-04.
-5. **PR-11:** Extend `config/config.py` schema (bump `schema_version`, migration for `role` + `receiver`). Wire the Sender ⇄ Receiver role toggle through `gui/controller.py` and add the receiver/sink GUI panels.
-6. **PR-12:** Add TM-SOAK-03 soak test.
-7. **PR-13:** Phase 5 hardening, docs, release candidate tag.
+1. Confirm CI green on Windows and Linux runners with the full suite.
+2. Run fresh-environment setup smoke (`python -m venv` + `pip install -e .[dev]` + `python scripts/preflight.py` + `python -m tcp_sim --headless`) on both OSes.
+3. Exploratory socket-tool checks against the sender and receiver (non-gating, per NFR).
+4. Tag the MVP release candidate once CI is green and the setup smoke passes on both OSes.
 
-File the `transport/base.py` extraction first. Every downstream task benefits from it and the diff is self-contained.
+Deferred post-MVP (non-blocking):
+
+- Dedicated GUI `SinkPanel` widget for live sink enable/disable/path swap. Today the role toggle uses config-file defaults; runtime sink changes go through `controller.configure_sink(...)`.
+- Replay-by-original-timestamp modes.

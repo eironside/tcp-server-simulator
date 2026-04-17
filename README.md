@@ -6,8 +6,10 @@ TCP/UDP simulator for ArcGIS Velocity validation.
 
 - Runs in server or client mode
 - Supports TCP and UDP transports
+- Switches between Sender and Receiver roles without restart
 - Streams delimited files without full in-memory loading
 - Supports step/auto/loop scheduling primitives
+- Writes received records to an optional rotating sink file (delimited passthrough or JSONL)
 - Provides a tkinter GUI with transport, file, status, and on-demand log panels
 - Enforces automated unit, integration, and soak gates
 
@@ -71,6 +73,7 @@ Threshold-based matrix checks are enforced in tests via environment variables (f
 ```bash
 TM_INT_01_CONNECTION_ROUNDS=120 pytest -m integration -q
 TM_SOAK_01_DURATION_SECONDS=120 TM_SOAK_02_UNIQUE_SENDERS=2000 pytest -m soak -q
+TM_SOAK_03_DURATION_SECONDS=60 TM_SOAK_03_PEER_COUNT=20 TM_SOAK_03_MIN_ROTATIONS=5 pytest -m soak -q
 ```
 
 ## Runbook
@@ -96,6 +99,49 @@ TM_SOAK_01_DURATION_SECONDS=120 TM_SOAK_02_UNIQUE_SENDERS=2000 pytest -m soak -q
 1. Set protocol `udp` with server mode.
 2. Send initial datagrams from peers to seed recipient cache.
 3. Broadcast payloads and validate recipient churn behavior.
+
+### Receiver Role (Consume Traffic From Remote Peer)
+
+The simulator can also receive TCP/UDP traffic and optionally stream records to a rotating sink file.
+
+1. In the Config panel, flip `Role` from `sender` to `receiver`.
+2. Choose `mode` (`server` to bind and accept peers, `client` to connect outbound) and `protocol` (`tcp` or `udp`).
+3. Start. The status panel emits `__receiver_records__` and `__receiver_sink__` updates.
+4. Stop to tear down the receiver pipeline cleanly.
+
+Framing defaults to line-feed delimited (`lf`). Configure `crlf` or `raw_chunk` via the config file's `receiver.framing_mode` field.
+
+### Sink File Output (Receiver Only)
+
+The sink is disabled by default. Configure it via the config JSON under `receiver.sink`:
+
+```json
+{
+  "role": "receiver",
+  "receiver": {
+    "framing_mode": "lf",
+    "max_record_bytes": 1048576,
+    "sink": {
+      "enabled": true,
+      "path": "received.jsonl",
+      "format": "jsonl",
+      "rotation_max_bytes": 104857600,
+      "rotation_backup_count": 5,
+      "queue_high_watermark_bytes": 8388608,
+      "queue_low_watermark_bytes": 2097152,
+      "queue_max_bytes": 33554432
+    }
+  }
+}
+```
+
+Sink behavior:
+
+- `format` is `jsonl` (`{ts, src, bytes_len, payload, truncated}`) or `delimited` (raw payload + configured separator).
+- `path` is size-rotated. When the active file exceeds `rotation_max_bytes`, it is rolled to `path.1`, older backups shift to `path.2`, and up to `rotation_backup_count` backups are retained.
+- TCP receivers pause per-peer reads when buffered sink bytes cross `queue_high_watermark_bytes` and resume below `queue_low_watermark_bytes` (no data loss).
+- UDP receivers drop records when the sink queue exceeds `queue_max_bytes` and increment the drop counter.
+- Sink enable/disable, format, and path can be changed at runtime via the controller without restarting the receiver.
 
 ## Troubleshooting
 
@@ -128,6 +174,16 @@ TM_SOAK_01_DURATION_SECONDS=120 TM_SOAK_02_UNIQUE_SENDERS=2000 pytest -m soak -q
 
 - Cause: environment pressure or regression in stream lifecycle.
 - Fix: rerun with diagnostics, inspect new commits affecting file reader, transport queues, or UDP recipient cache.
+
+### Receiver role starts but sink file stays empty
+
+- Cause: `receiver.sink.enabled` is `false` in the active config, or the configured `path` is not writable.
+- Fix: set `receiver.sink.enabled=true` with a writable absolute path, or call `controller.configure_sink(...)` at runtime. Verify file permissions on the parent directory.
+
+### Receiver reports records but sink records lag behind
+
+- Cause: sink backpressure is engaged (TCP reads paused) or the sink queue is saturating.
+- Fix: check for `sink_high_watermark` events in the JSON log. Raise `queue_high_watermark_bytes` / `queue_max_bytes`, increase `rotation_max_bytes`, or move the sink path to a faster disk.
 
 ## Exploratory Socket Checks (Non-Gating)
 
