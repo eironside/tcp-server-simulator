@@ -3,13 +3,13 @@ import socket
 
 import pytest
 
-from tcp_sim.transport.udp_server_sender import UdpServer, UdpServerConfig
+from tcp_sim.transport.udp_server_sender import UdpServerConfig, UdpServerSender
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_udp_reply_to_senders_cache_limits_and_expiry() -> None:
-    server = UdpServer(
+    server = UdpServerSender(
         UdpServerConfig(
             host="127.0.0.1",
             port=0,

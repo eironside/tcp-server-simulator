@@ -14,7 +14,7 @@ class UdpClientConfig:
     local_port: int = 0
 
 
-class UdpClient:
+class UdpClientSender:
     """UDP client that sends datagrams to a configured destination."""
 
     def __init__(self, config: UdpClientConfig) -> None:

@@ -5,11 +5,9 @@ from __future__ import annotations
 import asyncio
 import ssl
 from dataclasses import dataclass
-from typing import Callable
 
+from .base import EventCallback, EventEmitter
 from .connection_manager import ConnectionManager, QueueThresholds
-
-EventCallback = Callable[[dict[str, object]], None]
 
 
 @dataclass(frozen=True)
@@ -52,7 +50,7 @@ def create_server_ssl_context(config: TcpServerConfig) -> ssl.SSLContext | None:
     return context
 
 
-class TcpServer:
+class TcpServerSender(EventEmitter):
     """TCP server that broadcasts payloads and isolates slow clients."""
 
     def __init__(
@@ -68,7 +66,7 @@ class TcpServer:
             slow_client_timeout_seconds=self.config.slow_client_timeout_seconds,
         )
         self._connection_manager = ConnectionManager(thresholds=thresholds)
-        self._on_event = on_event
+        self._init_events(on_event)
 
         self._server: asyncio.AbstractServer | None = None
         self._writer_tasks: dict[str, asyncio.Task[None]] = {}
@@ -80,7 +78,6 @@ class TcpServer:
         self._header_payload = self.config.header_payload
         self._broadcast_ready_clients: set[str] = set()
         self._broadcast_ready_event = asyncio.Event()
-        self.events: list[dict[str, object]] = []
 
     @property
     def connected_client_count(self) -> int:
@@ -276,9 +273,3 @@ class TcpServer:
 
         self._connection_manager.unregister_client(client_id)
         self._emit_event("client_disconnect", client_id=client_id, reason=reason)
-
-    def _emit_event(self, event: str, **payload: object) -> None:
-        record = {"event": event, **payload}
-        self.events.append(record)
-        if self._on_event is not None:
-            self._on_event(record)

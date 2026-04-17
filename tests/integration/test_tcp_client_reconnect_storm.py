@@ -5,7 +5,7 @@ from contextlib import suppress
 
 import pytest
 
-from tcp_sim.transport.tcp_client_sender import TcpClient, TcpClientConfig
+from tcp_sim.transport.tcp_client_sender import TcpClientConfig, TcpClientSender
 from tests.scenario_thresholds import (
     TM_INT_02_FLAP_CYCLES,
     TM_INT_02_MAX_RECOVERY_SECONDS,
@@ -53,7 +53,7 @@ async def test_tcp_client_reconnects_after_flap() -> None:
 
     async def run_flap_cycle(
         cycle: int,
-        client: TcpClient,
+        client: TcpClientSender,
         port: int,
     ) -> float:
         client.connected_event.clear()
@@ -80,7 +80,7 @@ async def test_tcp_client_reconnects_after_flap() -> None:
     port = _reserve_port()
     recovery_times: list[float] = []
 
-    client = TcpClient(
+    client = TcpClientSender(
         TcpClientConfig(
             host="127.0.0.1",
             port=port,

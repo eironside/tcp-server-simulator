@@ -3,7 +3,7 @@ import time
 
 import pytest
 
-from tcp_sim.transport.tcp_server_sender import TcpServer, TcpServerConfig
+from tcp_sim.transport.tcp_server_sender import TcpServerConfig, TcpServerSender
 from tests.scenario_thresholds import (
     TM_INT_03_BROADCAST_ITERATIONS,
     TM_INT_03_MAX_BROADCAST_SECONDS,
@@ -14,7 +14,7 @@ from tests.scenario_thresholds import (
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_slow_client_is_disconnected_without_global_stall() -> None:
-    server = TcpServer(
+    server = TcpServerSender(
         TcpServerConfig(
             host="127.0.0.1",
             port=0,

@@ -14,10 +14,10 @@ from typing import Any
 from tcp_sim.engine.file_reader import FileReader
 from tcp_sim.engine.scheduler import ScheduledMessage
 from tcp_sim.engine.simulator import SimulatorEngine
-from tcp_sim.transport.tcp_client_sender import TcpClient, TcpClientConfig
-from tcp_sim.transport.tcp_server_sender import TcpServer, TcpServerConfig
-from tcp_sim.transport.udp_client_sender import UdpClient, UdpClientConfig
-from tcp_sim.transport.udp_server_sender import UdpServer, UdpServerConfig
+from tcp_sim.transport.tcp_client_sender import TcpClientConfig, TcpClientSender
+from tcp_sim.transport.tcp_server_sender import TcpServerConfig, TcpServerSender
+from tcp_sim.transport.udp_client_sender import UdpClientConfig, UdpClientSender
+from tcp_sim.transport.udp_server_sender import UdpServerConfig, UdpServerSender
 
 
 @dataclass
@@ -124,7 +124,7 @@ class SimulatorController:
                 f"Transport started: {settings.mode}/{settings.protocol} on {settings.host}:{settings.port}"
             )
 
-            if isinstance(self._active_transport, TcpServer):
+            if isinstance(self._active_transport, TcpServerSender):
                 self._emit(
                     f"__connections__:{self._active_transport.connected_client_count}"
                 )
@@ -177,7 +177,7 @@ class SimulatorController:
             f"Transport started: {settings.mode}/{settings.protocol} on {settings.host}:{settings.port}"
         )
 
-        if isinstance(self._active_transport, TcpServer):
+        if isinstance(self._active_transport, TcpServerSender):
             self._emit(
                 f"__connections__:{self._active_transport.connected_client_count}"
             )
@@ -192,7 +192,7 @@ class SimulatorController:
         protocol = settings.protocol.lower()
 
         if protocol == "tcp" and mode == "server":
-            return TcpServer(
+            return TcpServerSender(
                 TcpServerConfig(
                     host=settings.host,
                     port=settings.port,
@@ -209,7 +209,7 @@ class SimulatorController:
             )
 
         if protocol == "tcp" and mode == "client":
-            return TcpClient(
+            return TcpClientSender(
                 TcpClientConfig(
                     host=settings.host,
                     port=settings.port,
@@ -225,7 +225,7 @@ class SimulatorController:
             )
 
         if protocol == "udp" and mode == "server":
-            return UdpServer(
+            return UdpServerSender(
                 UdpServerConfig(
                     host=settings.host,
                     port=settings.port,
@@ -234,7 +234,9 @@ class SimulatorController:
             )
 
         if protocol == "udp" and mode == "client":
-            return UdpClient(UdpClientConfig(host=settings.host, port=settings.port))
+            return UdpClientSender(
+                UdpClientConfig(host=settings.host, port=settings.port)
+            )
 
         raise ValueError(f"Unsupported mode/protocol combination: {mode}/{protocol}")
 
@@ -394,8 +396,8 @@ class SimulatorController:
         )
         self._stream_settings = stream_settings
 
-        if isinstance(self._active_transport, TcpServer):
-            transport: TcpServer = self._active_transport
+        if isinstance(self._active_transport, TcpServerSender):
+            transport: TcpServerSender = self._active_transport
             transport.update_header_payload(
                 send_header_on_connect=stream_settings.send_header,
                 header_payload=header_payload,
@@ -433,7 +435,7 @@ class SimulatorController:
         if self._active_transport is None:
             return
 
-        if isinstance(self._active_transport, TcpServer):
+        if isinstance(self._active_transport, TcpServerSender):
             has_broadcast_clients = self._active_transport.has_broadcast_clients
             wait_for_broadcast_clients = (
                 self._active_transport.wait_for_broadcast_clients
@@ -570,7 +572,7 @@ class SimulatorController:
         else:
             self._emit(name)
 
-        if isinstance(self._active_transport, TcpServer) and name in {
+        if isinstance(self._active_transport, TcpServerSender) and name in {
             "client_connect",
             "client_disconnect",
         }:

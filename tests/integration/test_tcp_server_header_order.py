@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from tcp_sim.transport.tcp_server_sender import TcpServer, TcpServerConfig
+from tcp_sim.transport.tcp_server_sender import TcpServerConfig, TcpServerSender
 
 
 @pytest.mark.integration
@@ -11,7 +11,7 @@ async def test_tcp_server_sends_header_before_broadcast_to_new_client() -> None:
     header = b"id,lat,lon,timestamp\n"
     payload = b"truck-01,34.0,-118.2,2026-04-03T10:00:00Z\n"
 
-    server = TcpServer(
+    server = TcpServerSender(
         TcpServerConfig(
             host="127.0.0.1",
             port=0,
@@ -53,7 +53,7 @@ async def test_tcp_server_sends_header_before_broadcast_to_new_client() -> None:
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_wait_for_broadcast_clients_unblocks_on_connect() -> None:
-    server = TcpServer(
+    server = TcpServerSender(
         TcpServerConfig(
             host="127.0.0.1",
             port=0,

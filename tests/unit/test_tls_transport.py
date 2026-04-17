@@ -39,9 +39,3 @@ def test_client_tls_context_rejects_disabled_verification() -> None:
     )
     with pytest.raises(ValueError):
         create_client_ssl_context(config)
-        port=5565,
-        use_tls=True,
-        tls_verify=False,
-    )
-    with pytest.raises(ValueError):
-        create_client_ssl_context(config)

@@ -4,7 +4,7 @@ import tracemalloc
 
 import pytest
 
-from tcp_sim.transport.tcp_server_sender import TcpServer, TcpServerConfig
+from tcp_sim.transport.tcp_server_sender import TcpServerConfig, TcpServerSender
 from tests.scenario_thresholds import (
     TM_INT_01_CONNECTION_ROUNDS,
     TM_INT_01_MAX_ELAPSED_SECONDS,
@@ -16,7 +16,7 @@ from tests.scenario_thresholds import (
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_tcp_server_reconnect_storm_lifecycle() -> None:
-    server = TcpServer(TcpServerConfig(host="127.0.0.1", port=0))
+    server = TcpServerSender(TcpServerConfig(host="127.0.0.1", port=0))
     await server.start()
 
     try:

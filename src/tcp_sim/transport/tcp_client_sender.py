@@ -6,9 +6,8 @@ import asyncio
 import ssl
 from contextlib import suppress
 from dataclasses import dataclass
-from typing import Callable
 
-EventCallback = Callable[[dict[str, object]], None]
+from .base import EventCallback, EventEmitter, ReconnectBackoff
 
 
 @dataclass(frozen=True)
@@ -43,7 +42,7 @@ def create_client_ssl_context(config: TcpClientConfig) -> ssl.SSLContext | None:
     return context
 
 
-class TcpClient:
+class TcpClientSender(EventEmitter):
     """TCP client that reconnects automatically when disconnected."""
 
     def __init__(
@@ -52,7 +51,7 @@ class TcpClient:
         on_event: EventCallback | None = None,
     ) -> None:
         self.config = config
-        self._on_event = on_event
+        self._init_events(on_event)
 
         self._running = False
         self._run_task: asyncio.Task[None] | None = None
@@ -60,7 +59,6 @@ class TcpClient:
         self._reader: asyncio.StreamReader | None = None
         self._outbound: asyncio.Queue[bytes] = asyncio.Queue()
 
-        self.events: list[dict[str, object]] = []
         self.reconnect_count = 0
         self.last_disconnect_reason = ""
         self.connected_event = asyncio.Event()
@@ -91,7 +89,10 @@ class TcpClient:
         await self._outbound.put(payload)
 
     async def _run(self) -> None:
-        backoff = 1.0
+        backoff = ReconnectBackoff(
+            initial_seconds=1.0,
+            max_seconds=self.config.reconnect_max_backoff_seconds,
+        )
         ssl_context = create_client_ssl_context(self.config)
         tls_server_hostname = (
             self.config.tls_server_hostname
@@ -116,13 +117,15 @@ class TcpClient:
                 self._emit_event(
                     "client_connect", host=self.config.host, port=self.config.port
                 )
-                backoff = 1.0
+                backoff.reset()
 
                 await self._connected_loop()
             except OSError as exc:
                 self.last_disconnect_reason = str(exc)
                 self._emit_event(
-                    "client_reconnect_pending", reason=str(exc), backoff=backoff
+                    "client_reconnect_pending",
+                    reason=str(exc),
+                    backoff=backoff.current,
                 )
             finally:
                 await self._close_connection(
@@ -133,8 +136,8 @@ class TcpClient:
                 break
 
             self.reconnect_count += 1
-            await asyncio.sleep(backoff)
-            backoff = min(backoff * 2, self.config.reconnect_max_backoff_seconds)
+            delay = backoff.advance()
+            await asyncio.sleep(delay)
 
     async def _connected_loop(self) -> None:
         assert self._reader is not None
@@ -177,9 +180,3 @@ class TcpClient:
         if reason:
             self.last_disconnect_reason = reason
             self._emit_event("client_disconnect", reason=reason)
-
-    def _emit_event(self, event: str, **payload: object) -> None:
-        record = {"event": event, **payload}
-        self.events.append(record)
-        if self._on_event is not None:
-            self._on_event(record)

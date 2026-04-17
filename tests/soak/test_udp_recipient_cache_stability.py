@@ -5,7 +5,7 @@ import tracemalloc
 
 import pytest
 
-from tcp_sim.transport.udp_server_sender import UdpServer, UdpServerConfig
+from tcp_sim.transport.udp_server_sender import UdpServerConfig, UdpServerSender
 from tests.scenario_thresholds import (
     TM_SOAK_02_DURATION_SECONDS,
     TM_SOAK_02_MAX_MEMORY_DELTA_BYTES,
@@ -20,7 +20,7 @@ async def test_udp_reply_to_senders_cache_stability_thresholds() -> None:
     ttl_seconds = 0.4
     cleanup_interval_seconds = 0.05
 
-    server = UdpServer(
+    server = UdpServerSender(
         UdpServerConfig(
             host="127.0.0.1",
             port=0,

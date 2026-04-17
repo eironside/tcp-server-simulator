@@ -6,9 +6,8 @@ import asyncio
 import time
 from collections import OrderedDict
 from dataclasses import dataclass
-from typing import Callable
 
-EventCallback = Callable[[dict[str, object]], None]
+from .base import EventCallback, EventEmitter
 
 
 @dataclass(frozen=True)
@@ -24,14 +23,14 @@ class UdpServerConfig:
 
 
 class _UdpProtocol(asyncio.DatagramProtocol):
-    def __init__(self, server: "UdpServer") -> None:
+    def __init__(self, server: "UdpServerSender") -> None:
         self._server = server
 
     def datagram_received(self, _data: bytes, addr: tuple[str, int]) -> None:
         self._server.register_sender(addr)
 
 
-class UdpServer:
+class UdpServerSender(EventEmitter):
     """UDP listener/sender with recipient cache management."""
 
     def __init__(
@@ -40,7 +39,7 @@ class UdpServer:
         on_event: EventCallback | None = None,
     ) -> None:
         self.config = config or UdpServerConfig()
-        self._on_event = on_event
+        self._init_events(on_event)
 
         self._transport: asyncio.DatagramTransport | None = None
         self._protocol: _UdpProtocol | None = None
@@ -48,7 +47,6 @@ class UdpServer:
         self._recipient_cache: OrderedDict[tuple[str, int], float] = OrderedDict()
         self._running = False
         self._bound_port = self.config.port
-        self.events: list[dict[str, object]] = []
 
     @property
     def bound_port(self) -> int:
@@ -144,9 +142,3 @@ class UdpServer:
         while self._running:
             self.cleanup_expired()
             await asyncio.sleep(self.config.recipient_cache_cleanup_interval_seconds)
-
-    def _emit_event(self, event: str, **payload: object) -> None:
-        record = {"event": event, **payload}
-        self.events.append(record)
-        if self._on_event is not None:
-            self._on_event(record)
