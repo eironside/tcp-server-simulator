@@ -3,7 +3,7 @@ import socket
 
 import pytest
 
-from tcp_sim.transport.udp_server import UdpServer, UdpServerConfig
+from tcp_sim.transport.udp_server_sender import UdpServer, UdpServerConfig
 
 
 @pytest.mark.integration

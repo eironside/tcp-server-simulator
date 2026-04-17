@@ -5,7 +5,7 @@ import tracemalloc
 
 import pytest
 
-from tcp_sim.transport.udp_server import UdpServer, UdpServerConfig
+from tcp_sim.transport.udp_server_sender import UdpServer, UdpServerConfig
 from tests.scenario_thresholds import (
     TM_SOAK_02_DURATION_SECONDS,
     TM_SOAK_02_MAX_MEMORY_DELTA_BYTES,

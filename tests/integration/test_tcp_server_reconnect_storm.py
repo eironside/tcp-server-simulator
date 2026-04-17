@@ -4,7 +4,7 @@ import tracemalloc
 
 import pytest
 
-from tcp_sim.transport.tcp_server import TcpServer, TcpServerConfig
+from tcp_sim.transport.tcp_server_sender import TcpServer, TcpServerConfig
 from tests.scenario_thresholds import (
     TM_INT_01_CONNECTION_ROUNDS,
     TM_INT_01_MAX_ELAPSED_SECONDS,

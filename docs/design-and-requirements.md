@@ -1,7 +1,7 @@
 # TCP Server Simulator — Design & Requirements Document
 
 > **Status:** READY FOR IMPLEMENTATION — All design decisions resolved  
-> **Last Updated:** 2026-04-02  
+> **Last Updated:** 2026-04-17  
 > **Target Platforms:** Windows, Linux  
 > **Language:** Python 3.10+  
 > **GUI Framework:** tkinter (stdlib)  
@@ -12,10 +12,21 @@
 
 ## 1. Overview
 
-A cross-platform TCP simulator for testing ArcGIS Velocity. The tool reads delimited text files (primarily CSV) and transmits their contents line-by-line over TCP at a configurable rate. It operates in two modes:
+A cross-platform TCP/UDP traffic simulator for testing ArcGIS Velocity. The tool can either **transmit** delimited text files (primarily CSV) line-by-line at a configurable rate, or **receive** TCP/UDP traffic and optionally persist it to disk. Two orthogonal user-selectable axes define runtime behavior:
 
-- **Server Mode:** Listens on a configured port, accepts inbound connections, and pushes data to connected clients.
-- **Client Mode:** Connects outbound to a specified host:port and pushes data to the remote server.
+- **Role / Direction** — **Sender** (emit data from a loaded file) or **Receiver** (accept and capture inbound data).
+- **Transport mode** — **Server** (bind and listen) or **Client** (connect outbound). Valid in both Sender and Receiver roles.
+
+This produces four supported operating combinations:
+
+| Role | Mode | Behavior |
+|------|------|----------|
+| Sender | Server | Listen, accept inbound connections, broadcast file data to connected clients. |
+| Sender | Client | Connect outbound to a remote host:port and push file data. |
+| Receiver | Server | Listen on a port, accept inbound connections, consume inbound data (optionally write to a sink file). |
+| Receiver | Client | Connect outbound to a remote server and consume inbound data from it (optionally write to a sink file). |
+
+The role is switched via a **Sender ⇄ Receiver toggle** in the GUI and applies independently of the Server/Client mode toggle and the TCP/UDP protocol toggle.
 
 The tool is a spiritual successor to the GeoEvent TCP Simulator (Java), rebuilt for modern use. This is a clean-slate design with no backward compatibility requirements.
 
@@ -45,11 +56,11 @@ Velocity acts as a TCP client that connects to an external TCP server to ingest 
 
 This connect → disconnect → reconnect pattern happens every time a feed is configured. Previous tools (SocketTest, simple Python scripts) broke here because they couldn't handle the repeated disconnections. **Our server mode must treat this as normal behavior** — connections that come and go are expected, not errors.
 
-**Velocity TCP Client Output (secondary use case):**
-Velocity RATs can also output data to an external TCP server. In this scenario, our simulator would be in **Server mode listening** — but the current scope only covers *sending* data. Receiving data from Velocity is out of scope for MVP.
+**Velocity TCP Client Output (now in scope):**
+Velocity RATs can output data to an external TCP server. In this scenario our simulator runs in **Receiver role, Server mode** and captures that output, optionally streaming it to a delimited or JSON sink file for offline inspection. This is the primary motivation for adding receiver support.
 
 **Velocity TCP Server Feed (reverse direction):**
-Our simulator in **Client mode** connects to Velocity's TCP Server feed to push data inward. Less commonly tested but supported.
+Our simulator in **Sender role, Client mode** connects to Velocity's TCP Server feed to push data inward. Less commonly tested but supported. The mirror case — **Receiver role, Client mode** — can pull data from an external TCP server that pushes to connected clients (e.g., a Velocity RAT configured as a TCP client output that the tester points our receiver at via an intermediary, or third-party publishers).
 
 ### 1.2 Data Format Considerations
 
@@ -113,6 +124,11 @@ These answers were provided by the project owner and inform all requirements bel
 | RQ19 | GUI log monitoring mode | **No live monitoring**; load and refresh logs on demand | Yes |
 | RQ20 | Test strategy depth | **Mandatory automated integration + soak suites** for reconnect storms, slow-client churn, and large-file streaming/resource stability | Yes |
 | RQ21 | Runtime reconfiguration behavior | Change rate and data file without restarting app; apply rate immediately and swap file at next safe boundary | Yes |
+| RQ22 | Sender/Receiver role | **Toggle in GUI** between Sender and Receiver roles. Orthogonal to Server/Client mode and TCP/UDP protocol. Switching roles performs a controlled stop/rebind like FR-03a. | Yes |
+| RQ23 | Receiver sink output | **Optional** sink-to-file. Disabled by default (metrics-only). When enabled, each received message is appended to a configurable sink file. | Yes |
+| RQ24 | Sink file formats | **Delimited passthrough** (write received bytes verbatim, split on configured record separator) and **JSON Lines** (one JSON object per line: `{ts, src, bytes_len, payload}` with payload as UTF-8 string, or base64 if non-UTF-8). | Yes |
+| RQ25 | Sink file rotation/size | Same rotation policy model as log files: configurable max bytes (default 100 MB) and configurable backup count (default 5). | Yes |
+| RQ26 | Receiver framing | TCP: split on configured record separator (default `\n`), same terminator options as sender (`\n`, `\r\n`, none=length-prefixed not required, raw-chunk). UDP: each datagram is one record. Oversized records (> configurable max record bytes, default 1 MiB) are truncated and logged. | Yes |
 
 ---
 
@@ -122,12 +138,14 @@ These answers were provided by the project owner and inform all requirements bel
 
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| FR-01 | The application shall support **Server mode**: bind to a port, accept TCP connections, and broadcast data to all connected clients. | MVP |
-| FR-02 | The application shall support **Client mode**: connect to a remote host:port and transmit data. | MVP |
+| FR-01 | The application shall support **Server mode**: bind to a port and accept TCP connections (sender broadcasts, receiver consumes). | MVP |
+| FR-02 | The application shall support **Client mode**: connect to a remote host:port (sender transmits, receiver consumes inbound stream). | MVP |
 | FR-03 | The user shall be able to switch between Server and Client modes via the GUI without restarting the application. | MVP |
-| FR-03a | If mode or protocol is changed while transport is active, the application shall execute a controlled stop/rebind transition (no abrupt task termination), then apply the new mode/protocol with explicit status updates in the GUI. | MVP |
+| FR-03a | If mode, protocol, or role is changed while transport is active, the application shall execute a controlled stop/rebind transition (no abrupt task termination), then apply the new mode/protocol/role with explicit status updates in the GUI. | MVP |
 | FR-04 | The application shall support **TCP** and **UDP** protocols, selectable in the GUI. | MVP |
 | FR-04a | In server mode, the application shall gracefully handle clients that **connect and disconnect repeatedly** (e.g., Velocity's testConnection → sampleMessages → feed run lifecycle). Disconnections shall not interrupt transmission to other clients or cause errors. | MVP |
+| FR-04b | The application shall support a **Sender ⇄ Receiver role toggle** in the GUI. Role is orthogonal to Server/Client mode and TCP/UDP protocol. Default role is **Sender**. | MVP |
+| FR-04c | Controls and panels not applicable to the active role shall be **disabled or hidden** (e.g., file preview/rate controls in Receiver role; sink-file controls in Sender role). | MVP |
 
 ### 3.2 File Loading & Parsing
 
@@ -225,9 +243,30 @@ These answers were provided by the project owner and inform all requirements bel
 | FR-50 | The project shall include a mandatory **automated soak test suite** for large-file streaming and long-running resource stability (memory/descriptor growth, reconnect stability, no deadlock). | MVP |
 | FR-51 | Manual socket tools (e.g., netcat/telnet) may be used for exploratory smoke checks, but they are **non-gating** and not a substitute for automated suites. | MVP |
 | FR-52 | MVP release quality gate: unit tests, integration tests, and soak tests must pass before merge to release branch. | MVP |
-| FR-53 | Automated suites shall implement the named MVP matrix scenarios in Section **5.5.1** (`TM-INT-01` through `TM-SOAK-02`). | MVP |
+| FR-53 | Automated suites shall implement the named MVP matrix scenarios in Section **5.5.1** (`TM-INT-01` through `TM-SOAK-03`). | MVP |
 | FR-54 | Each matrix scenario shall define setup profile, duration, and numeric pass/fail thresholds; CI shall fail when any threshold is violated. | MVP |
 | FR-55 | The project shall provide a standalone `scripts/preflight.py` command that exits non-zero when prerequisites fail and prints actionable setup guidance (Python version, active virtual environment, tkinter/Tk availability). | MVP |
+
+### 3.9 Receiver Role
+
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-56 | In **Receiver role, Server mode (TCP)**, the application shall bind and accept inbound TCP connections and read framed records from every connected peer concurrently. | MVP |
+| FR-57 | In **Receiver role, Client mode (TCP)**, the application shall connect outbound to a configured host:port and read framed records from the remote peer. Auto-reconnect with exponential backoff (shared policy with sender client, FR-31) shall apply. | MVP |
+| FR-58 | In **Receiver role, Server mode (UDP)**, the application shall bind to a configured port (optionally joining a multicast group) and consume inbound datagrams from any source. | MVP |
+| FR-59 | In **Receiver role, Client mode (UDP)**, the application shall bind a local ephemeral port, optionally send a configurable "hello" datagram to the remote host:port to register with publishers, and consume inbound datagrams from that peer. | MVP |
+| FR-60 | The receiver shall frame TCP streams using the configured **record separator** (default `\n`, options `\n`, `\r\n`, raw-chunk). For UDP, each datagram is one record. | MVP |
+| FR-61 | Records larger than the configured **max record bytes** (default 1 MiB) shall be truncated at the cap, emitted to the sink with a truncation flag, and logged at WARN. | MVP |
+| FR-62 | The receiver shall expose live **receive statistics** in the GUI: total records received, total bytes received, current records/s and KB/s, connected peer count (server mode) or connection state (client mode), per-peer last-seen timestamps. | MVP |
+| FR-63 | The receiver shall support an **optional sink-to-file** feature, disabled by default. When enabled, every received record is appended to the configured sink file. | MVP |
+| FR-64 | The sink file format shall be user-selectable between **delimited passthrough** (raw received payload followed by the configured record separator) and **JSON Lines** (one JSON object per line containing at minimum `ts` ISO 8601 UTC, `src` peer address, `bytes_len` integer, `payload` UTF-8 string, and `truncated` boolean; non-UTF-8 payloads are base64-encoded and marked with `"encoding":"base64"`). | MVP |
+| FR-65 | The sink file shall support **rotation** by size with a configurable max bytes (default 100 MB) and configurable backup count (default 5). Rotation shall not drop in-flight records. | MVP |
+| FR-66 | The user shall be able to **enable/disable sink writing**, **switch sink format**, and **change sink file path** at runtime without restarting the application. Transitions take effect at the next record boundary. | MVP |
+| FR-67 | The GUI shall display sink-file status: enabled/disabled, current path, current file size, total bytes written, and rotation count. | MVP |
+| FR-68 | The receiver shall apply **backpressure** when the sink writer cannot keep up: inbound TCP reads are paused (per-peer) when the sink write queue exceeds a configurable high watermark and resumed below the low watermark. For UDP, excess datagrams shall be dropped and counted. | MVP |
+| FR-69 | All receiver connection and data events (connect, disconnect, record received summary at DEBUG, truncation, sink rotation, sink errors, UDP drops) shall be emitted to the JSON structured log. | MVP |
+| FR-70 | The receiver shall cleanly stop on role switch, application shutdown, and window close, flushing and closing the sink file without data loss for successfully read records. | MVP |
+| FR-71 | Automated tests shall cover receiver role end-to-end behavior for each of the four role+mode combinations, sink-file correctness (both formats), rotation, runtime enable/disable, and backpressure behavior. | MVP |
 
 ---
 
@@ -460,6 +499,35 @@ This preserves the relative timing between events while anchoring them to the cu
 - No automatic live log streaming/tailing in MVP (or post-MVP by default).
 - On-demand refresh reduces tkinter UI update pressure during high-throughput sends.
 
+#### Receiver Role (Sender ⇄ Receiver Toggle)
+The application supports a **Receiver role** orthogonal to Server/Client mode and TCP/UDP protocol. The role is selected via a top-level GUI toggle and drives which engine pipeline is active:
+
+- **Sender pipeline:** file reader → scheduler → timestamp rewriter → transport.
+- **Receiver pipeline:** transport → frame splitter → (optional) sink writer.
+
+Receiver behavior by transport combination:
+- **TCP Server:** bind and `accept()` loop; each accepted peer runs an independent read loop that splits the byte stream on the configured record separator. Peer connect/disconnect churn is handled the same way as sender Server mode (non-error, lifecycle-normal).
+- **TCP Client:** connect to a configured host:port; read until EOF or error; apply the shared auto-reconnect policy with exponential backoff (FR-31).
+- **UDP Server:** bind a datagram socket (optionally join a multicast group). Each datagram is one record. Source address is recorded for stats and for the JSONL `src` field.
+- **UDP Client:** bind an ephemeral port, optionally send a configurable "hello" datagram to the remote host:port to register with publishers that key off sender address, then read datagrams from that peer.
+
+Framing:
+- TCP record separator is shared with the sender (`\n` default, `\r\n`, or raw-chunk). Raw-chunk emits whatever bytes each read returns as one record (useful for binary/pre-framed streams).
+- Records are capped at `receiver_max_record_bytes` (default **1 MiB**); oversize records are truncated, flagged with `truncated=true` in JSONL sink and logged WARN.
+
+Sink file (optional):
+- **Disabled by default.** Receiver can be used purely for metrics/observation.
+- Two formats, user-selectable at runtime:
+  - **Delimited passthrough:** append raw payload bytes followed by the configured record separator. Preserves byte fidelity for replay through the sender role.
+  - **JSON Lines:** append one JSON object per line: `{"ts":"2026-04-17T12:34:56.789Z","src":"10.0.1.5:54321","bytes_len":87,"payload":"...","truncated":false}`. Non-UTF-8 payloads set `"encoding":"base64"` and base64-encode the payload.
+- **Rotation:** size-based with configurable max bytes (default 100 MB) and backup count (default 5). Shares the same rotation primitives as JSON logs.
+- **Runtime reconfiguration:** enable/disable, format swap, and path change take effect at the next record boundary with no connection drop.
+- **Backpressure:** sink writer runs on a bounded queue. TCP receivers pause their per-peer read loop when the sink queue exceeds its high watermark and resume below the low watermark; this creates natural TCP backpressure to the sender. UDP drops excess datagrams (and counts them) because UDP has no flow control.
+
+Stats / GUI:
+- Receiver role exposes records/s, KB/s, total records, total bytes, peer count (server) or connection state (client), per-peer last-seen, sink state (enabled/path/size/rotations), UDP drop count, and truncation count.
+- Sender-only controls (rate, step, loop, file preview, timestamp rewrite) are disabled/hidden in Receiver role. Receiver-only controls (sink path/format/enable, max record bytes) are disabled/hidden in Sender role.
+
 #### Environment Preflight
 - Provide a standalone script at `scripts/preflight.py` that users can run before first launch.
 - The script and application startup must use the same validation logic to avoid drift.
@@ -504,7 +572,20 @@ The config file stores all user-configurable settings:
   "udp_recipient_cache_ttl_seconds": 300,
   "udp_recipient_cache_max_entries": 256,
   "udp_recipient_cache_cleanup_interval_seconds": 30,
-  "udp_recipient_cache_eviction_policy": "lru"
+  "udp_recipient_cache_eviction_policy": "lru",
+  "role": "sender",
+  "receiver": {
+    "record_separator": "\n",
+    "max_record_bytes": 1048576,
+    "sink_enabled": false,
+    "sink_format": "jsonl",
+    "sink_path": "received.jsonl",
+    "sink_rotation_max_bytes": 104857600,
+    "sink_rotation_backup_count": 5,
+    "sink_queue_high_watermark_bytes": 1048576,
+    "sink_queue_low_watermark_bytes": 524288,
+    "udp_client_hello_bytes": ""
+  }
 }
 ```
 
@@ -548,6 +629,8 @@ Manual socket-tool checks (netcat/telnet) are optional diagnostics only and do n
 | TM-INT-03 | Integration | **Slow-client churn and backpressure** | Server mode with 50 clients: 40 normal consumers + 10 throttled consumers (<= 1 KB/s). Send rate >= 200 features/s with ~512-byte lines. | >= 20 min | 1) Slow clients enter blocked state and disconnect within `slow_client_timeout_seconds + 2s`. 2) Normal clients remain connected and continue receiving data. 3) Per-client queues never exceed hard cap. 4) No global broadcast stall caused by slow clients. |
 | TM-SOAK-01 | Soak | **Large-file streaming stability** | Server mode, looping enabled, input file >= 5 GB, 10 normal clients. | >= 30 min in CI (>= 2 h local extended) | 1) No crash/deadlock. 2) RSS memory growth <= 15% after warmup (rolling 10-min window). 3) File/socket handle growth is non-monotonic (delta <= +5 after warmup). 4) Throughput remains within +/-10% of configured rate excluding planned pause periods. |
 | TM-SOAK-02 | Soak | **UDP reply-to-senders cache stability** | UDP server in reply-to-senders mode with churned sender endpoints (>= 2,000 unique address:port pairs). | >= 30 min | 1) Recipient cache size never exceeds configured cap. 2) Expired recipients removed within `cleanup_interval + 5s`. 3) Overflow eviction follows configured policy (`lru`). 4) No unbounded memory growth. |
+| TM-INT-04 | Integration | **Receiver role end-to-end (all 4 role+mode combos)** | Drive each of Receiver TCP-Server, Receiver TCP-Client, Receiver UDP-Server, Receiver UDP-Client against a scripted sender emitting known payloads (10k records, 200 records/s). Test both sink formats (delimited, JSONL) and sink-off mode. | >= 10 min per combo | 1) All records accounted for (received count == sent count minus intentional UDP losses). 2) Sink file byte/record counts match expectations for each format. 3) Truncation flag set correctly for oversize records. 4) Runtime sink enable/disable/path-swap produces no dropped records for TCP. |
+| TM-SOAK-03 | Soak | **Receiver sink rotation and backpressure stability** | Receiver TCP-Server, JSONL sink enabled, 20 senders at aggregate >= 500 records/s, artificial slow disk via small sink queue watermarks to force rotation and backpressure. | >= 30 min | 1) Sink file rotates at configured threshold with correct backup count retained. 2) Per-peer read-pause activates above high watermark and clears below low watermark. 3) No memory or file-descriptor growth beyond warmup. 4) No data loss on TCP peers; UDP drop counter (if any UDP cross-traffic) is monotonic and bounded. |
 
 ### 5.5.2 CI Gate Policy
 
@@ -571,14 +654,22 @@ tcp-server-simulator/
 │       │   ├── file_reader.py       # Streaming CSV reader, validation
 │       │   ├── scheduler.py         # Rate control, step/auto/loop logic
 │       │   ├── timestamp.py         # Timestamp parsing and rewriting
-│       │   └── simulator.py         # Orchestrates reader + scheduler + transport
+│       │   ├── simulator.py         # Orchestrates reader + scheduler + transport (sender)
+│       │   ├── receiver.py          # Orchestrates transport + framer + sink (receiver)
+│       │   ├── framer.py            # Record-separator framing for TCP receive
+│       │   └── sink_writer.py       # Delimited passthrough + JSONL sink with rotation
 │       ├── transport/
 │       │   ├── __init__.py
-│       │   ├── tcp_server.py        # asyncio TCP server, broadcast, backpressure
-│       │   ├── tcp_client.py        # asyncio TCP client, auto-reconnect
-│       │   ├── udp_server.py        # asyncio UDP listener/sender (multicast or reply-to-senders)
-│       │   ├── udp_client.py        # asyncio UDP client sender
-│       │   └── connection_manager.py # Track clients, slow client detection
+│       │   ├── base.py                       # Shared socket lifecycle, bind/connect, shutdown helpers
+│       │   ├── tcp_server_sender.py          # TCP server, broadcast, backpressure, slow-client disconnect
+│       │   ├── tcp_server_receiver.py        # TCP server, accept loop, per-peer read/frame, sink backpressure
+│       │   ├── tcp_client_sender.py          # TCP client, auto-reconnect, outbound send queue
+│       │   ├── tcp_client_receiver.py        # TCP client, auto-reconnect, inbound read/frame
+│       │   ├── udp_server_sender.py          # UDP listener/sender (multicast or reply-to-senders)
+│       │   ├── udp_server_receiver.py        # UDP listener, datagram-per-record consume
+│       │   ├── udp_client_sender.py          # UDP client sender
+│       │   ├── udp_client_receiver.py        # UDP client (bind ephemeral, optional hello, consume)
+│       │   └── connection_manager.py         # Track peers, slow-client detection, reconnect state
 │       ├── config/
 │       │   ├── __init__.py
 │       │   └── config.py            # JSON config load/save, defaults
@@ -603,7 +694,11 @@ tcp-server-simulator/
 │   │   ├── test_tcp_server_reconnect_storm.py
 │   │   ├── test_tcp_client_reconnect_storm.py
 │   │   ├── test_slow_client_churn_backpressure.py
-│   │   └── test_udp_reply_to_senders_cache.py
+│   │   ├── test_udp_reply_to_senders_cache.py
+│   │   ├── test_receiver_tcp_server.py
+│   │   ├── test_receiver_tcp_client.py
+│   │   ├── test_receiver_udp.py
+│   │   └── test_receiver_sink_formats_and_rotation.py
 │   └── soak/
 │       └── test_large_file_streaming_stability.py
 ├── scripts/
@@ -641,6 +736,7 @@ The following gaps from the original copilot-instructions have been resolved in 
 | Logging undefined | JSON structured logging to file + GUI log panel (FR-35 through FR-40) |
 | Rate unit ambiguous | Features/second with KB/s display (FR-14, FR-15) |
 | No explicit readiness command | Standalone `scripts/preflight.py` plus startup preflight checks (FR-55, NFR-09) |
+| No receive-side support | Sender/Receiver role toggle with optional delimited or JSONL sink file (FR-04b, FR-56 through FR-71) |
 
 ---
 
@@ -726,9 +822,10 @@ All design questions have been resolved. See Section 2 for the complete decision
 | Phase | Scope | Notes |
 |-------|-------|-------|
 | **Phase 1: Foundation** | Project structure, config schema + schema versioning/migration, JSON config load/save, streaming file reader with validation, unit tests | No GUI, no networking yet. Unit test baseline established. |
-| **Phase 2: Transport** | TCP server (broadcast), TCP client (with auto-reconnect), UDP server, UDP client, connection manager with backpressure/slow client detection | Must pass integration matrix scenarios `TM-INT-01`, `TM-INT-02`, `TM-INT-03`. Manual netcat/telnet is optional smoke only. |
+| **Phase 2: Transport (sender)** | `transport/base.py` (shared socket lifecycle), `tcp_server_sender.py` (broadcast), `tcp_client_sender.py` (auto-reconnect), `udp_server_sender.py`, `udp_client_sender.py`, connection manager with backpressure/slow client detection. Existing `tcp_server.py` / `tcp_client.py` / `udp_server.py` / `udp_client.py` modules are renamed to their `_sender` variants and their shared primitives extracted into `base.py`. | Must pass integration matrix scenarios `TM-INT-01`, `TM-INT-02`, `TM-INT-03`. Manual netcat/telnet is optional smoke only. |
+| **Phase 2b: Transport (receiver) + Receiver engine** | `tcp_server_receiver.py`, `tcp_client_receiver.py`, `udp_server_receiver.py`, `udp_client_receiver.py` built on the shared `base.py`. Receiver engine (`engine/receiver.py` + `engine/framer.py` + `engine/sink_writer.py`), delimited + JSONL sink formats with rotation, runtime sink reconfiguration, per-peer TCP read-pause backpressure, UDP drop-and-count. | Must pass `TM-INT-04` and `TM-SOAK-03`. Sender ⇄ Receiver role toggle wired end-to-end through controller. |
 | **Phase 3: Scheduler** | Rate control (features/s), step mode, jump-to-line, auto mode, loop mode, pause/resume, timestamp rewriting (ISO 8601, epoch millis, epoch seconds) | Must pass soak matrix scenarios `TM-SOAK-01`, `TM-SOAK-02`. |
-| **Phase 4: GUI** | Main window, config panel, file browser + preview, transport controls (start/stop/pause/step/jump), runtime file/rate reconfiguration without restart, status panel (connections, rate, progress, blocking), on-demand log panel (load/refresh), config save/load | Full GUI wired to engine. This is the MVP delivery. |
+| **Phase 4: GUI** | Main window, **role toggle (Sender/Receiver)**, config panel, file browser + preview (sender), sink file panel (receiver), transport controls (start/stop/pause/step/jump), runtime file/rate reconfiguration without restart, status panel (connections, rate, progress, blocking, receive stats, sink status), on-demand log panel (load/refresh), config save/load | Full GUI wired to engine. This is the MVP delivery. |
 
 ### Post-MVP
 

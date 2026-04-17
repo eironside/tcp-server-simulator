@@ -5,7 +5,7 @@ from contextlib import suppress
 
 import pytest
 
-from tcp_sim.transport.tcp_client import TcpClient, TcpClientConfig
+from tcp_sim.transport.tcp_client_sender import TcpClient, TcpClientConfig
 from tests.scenario_thresholds import (
     TM_INT_02_FLAP_CYCLES,
     TM_INT_02_MAX_RECOVERY_SECONDS,

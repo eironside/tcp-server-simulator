@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from tcp_sim.transport.tcp_server import TcpServer, TcpServerConfig
+from tcp_sim.transport.tcp_server_sender import TcpServer, TcpServerConfig
 
 
 @pytest.mark.integration

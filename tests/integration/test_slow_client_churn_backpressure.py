@@ -3,7 +3,7 @@ import time
 
 import pytest
 
-from tcp_sim.transport.tcp_server import TcpServer, TcpServerConfig
+from tcp_sim.transport.tcp_server_sender import TcpServer, TcpServerConfig
 from tests.scenario_thresholds import (
     TM_INT_03_BROADCAST_ITERATIONS,
     TM_INT_03_MAX_BROADCAST_SECONDS,

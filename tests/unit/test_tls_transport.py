@@ -1,7 +1,13 @@
 import pytest
 
-from tcp_sim.transport.tcp_client import TcpClientConfig, create_client_ssl_context
-from tcp_sim.transport.tcp_server import TcpServerConfig, create_server_ssl_context
+from tcp_sim.transport.tcp_client_sender import (
+    TcpClientConfig,
+    create_client_ssl_context,
+)
+from tcp_sim.transport.tcp_server_sender import (
+    TcpServerConfig,
+    create_server_ssl_context,
+)
 
 
 @pytest.mark.unit
@@ -27,6 +33,12 @@ def test_client_tls_context_disabled_returns_none() -> None:
 def test_client_tls_context_rejects_disabled_verification() -> None:
     config = TcpClientConfig(
         host="127.0.0.1",
+        port=5565,
+        use_tls=True,
+        tls_verify=False,
+    )
+    with pytest.raises(ValueError):
+        create_client_ssl_context(config)
         port=5565,
         use_tls=True,
         tls_verify=False,

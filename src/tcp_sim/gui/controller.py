@@ -14,10 +14,10 @@ from typing import Any
 from tcp_sim.engine.file_reader import FileReader
 from tcp_sim.engine.scheduler import ScheduledMessage
 from tcp_sim.engine.simulator import SimulatorEngine
-from tcp_sim.transport.tcp_client import TcpClient, TcpClientConfig
-from tcp_sim.transport.tcp_server import TcpServer, TcpServerConfig
-from tcp_sim.transport.udp_client import UdpClient, UdpClientConfig
-from tcp_sim.transport.udp_server import UdpServer, UdpServerConfig
+from tcp_sim.transport.tcp_client_sender import TcpClient, TcpClientConfig
+from tcp_sim.transport.tcp_server_sender import TcpServer, TcpServerConfig
+from tcp_sim.transport.udp_client_sender import UdpClient, UdpClientConfig
+from tcp_sim.transport.udp_server_sender import UdpServer, UdpServerConfig
 
 
 @dataclass
